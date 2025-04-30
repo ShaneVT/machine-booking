@@ -15,9 +15,6 @@
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     input, select, label { display: block; margin: 4px 0; }
   </style>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
 </head>
 <body>
   <h1>Machine Booking System</h1>
@@ -81,34 +78,24 @@
     </table>
   </section>
 
-  <script>
-    // Initialize Firebase
-    // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+  <script type="module">
+    // Firebase imports
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
-  authDomain: "machine-booking-3c611.firebaseapp.com",
-  projectId: "machine-booking-3c611",
-  storageBucket: "machine-booking-3c611.firebasestorage.app",
-  messagingSenderId: "417259615223",
-  appId: "1:417259615223:web:8535395de07d7bce0db4f2"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
+      authDomain: "machine-booking-3c611.firebaseapp.com",
+      projectId: "machine-booking-3c611",
+      storageBucket: "machine-booking-3c611.appspot.com",
+      messagingSenderId: "417259615223",
+      appId: "1:417259615223:web:8535395de07d7bce0db4f2"
     };
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
     document.addEventListener('DOMContentLoaded', () => {
       const ADMIN_PASS = '0404';
@@ -124,7 +111,9 @@ const app = initializeApp(firebaseConfig);
       let machinesUnsub, bookingsUnsub, auditUnsub;
 
       function hideAll() {
-        machinesUnsub && machinesUnsub(); bookingsUnsub && bookingsUnsub(); auditUnsub && auditUnsub();
+        machinesUnsub && machinesUnsub();
+        bookingsUnsub && bookingsUnsub();
+        auditUnsub && auditUnsub();
         [modeSelection, loginPrompt, adminSection, userSection, logSection, auditSection].forEach(el => el.classList.add('hidden'));
       }
       function show(el) { el.classList.remove('hidden'); }
@@ -132,32 +121,31 @@ const app = initializeApp(firebaseConfig);
       hideAll(); show(modeSelection);
 
       // Admin flow
-      document.getElementById('admin-btn').onclick = () => { hideAll(); pwInput.value=''; pwError.textContent=''; show(loginPrompt); };
+      document.getElementById('admin-btn').onclick = () => { hideAll(); pwInput.value = ''; pwError.textContent = ''; show(loginPrompt); };
       document.getElementById('pw-cancel').onclick = () => { hideAll(); show(modeSelection); };
       document.getElementById('pw-submit').onclick = () => {
-        if (pwInput.value !== ADMIN_PASS) { pwError.textContent='Incorrect password'; return; }
+        if (pwInput.value !== ADMIN_PASS) { pwError.textContent = 'Incorrect password'; return; }
         hideAll(); show(adminSection);
-        machinesUnsub = db.collection('machines').onSnapshot(snapshot => {
-          const ul = document.getElementById('machines-list'); ul.innerHTML='';
-          snapshot.forEach(doc => { const li=document.createElement('li'); li.textContent=doc.data().name; ul.appendChild(li); });
+        machinesUnsub = onSnapshot(collection(db, 'machines'), snapshot => {
+          const ul = document.getElementById('machines-list'); ul.innerHTML = '';
+          snapshot.forEach(doc => { const li = document.createElement('li'); li.textContent = doc.data().name; ul.appendChild(li); });
         });
       };
       document.getElementById('admin-back').onclick = () => { hideAll(); show(modeSelection); };
       document.getElementById('add-machine-btn').onclick = () => {
         const name = document.getElementById('machine-name-input').value.trim(); if (!name) return;
-        db.collection('machines').add({ name }).then(() => {
-          db.collection('audit').add({ time: new Date(), user:'Admin', action:'Add Machine', details:name });
-        });
+        addDoc(collection(db, 'machines'), { name });
+        addDoc(collection(db, 'audit'), { time: Date.now(), user: 'Admin', action: 'Add Machine', details: name });
       };
 
       // View logs
       document.getElementById('view-logs-btn').onclick = () => {
         hideAll(); show(logSection);
-        bookingsUnsub = db.collection('bookings').onSnapshot(snapshot => {
-          const tbody = document.getElementById('log-table-body'); tbody.innerHTML='';
+        bookingsUnsub = onSnapshot(collection(db, 'bookings'), snapshot => {
+          const tbody = document.getElementById('log-table-body'); tbody.innerHTML = '';
           snapshot.forEach(doc => {
-            const b=doc.data(); const row=document.createElement('tr');
-            [b.machine,b.user,b.start,b.end].forEach(v=>{const td=document.createElement('td');td.textContent=v;row.appendChild(td);});
+            const b = doc.data(); const row = document.createElement('tr');
+            [b.machine, b.user, b.start, b.end].forEach(v => { const td = document.createElement('td'); td.textContent = v; row.appendChild(td); });
             tbody.appendChild(row);
           });
         });
@@ -167,12 +155,11 @@ const app = initializeApp(firebaseConfig);
       // Audit
       document.getElementById('view-audit-btn').onclick = () => {
         hideAll(); show(auditSection);
-        auditUnsub = db.collection('audit').orderBy('time','asc').onSnapshot(snapshot => {
-          const tbody=document.getElementById('audit-table-body'); tbody.innerHTML='';
+        auditUnsub = onSnapshot(query(collection(db, 'audit'), orderBy('time', 'asc')), snapshot => {
+          const tbody = document.getElementById('audit-table-body'); tbody.innerHTML = '';
           snapshot.forEach(doc => {
-            const a=doc.data(); const row=document.createElement('tr');
-            [new Date(a.time.seconds*1000).toLocaleString('en-AU'),a.user,a.action,a.details]
-            .forEach(v=>{const td=document.createElement('td');td.textContent=v;row.appendChild(td);});
+            const a = doc.data(); const row = document.createElement('tr');
+            [new Date(a.time).toLocaleString('en-AU'), a.user, a.action, a.details].forEach(v => { const td = document.createElement('td'); td.textContent = v; row.appendChild(td); });
             tbody.appendChild(row);
           });
         });
@@ -181,10 +168,10 @@ const app = initializeApp(firebaseConfig);
 
       // User flow
       document.getElementById('user-btn').onclick = () => { hideAll(); show(userSection);
-        db.collection('machines').get().then(snapshot => {
-          const ul=document.getElementById('user-machines'); ul.innerHTML='';
-          snapshot.forEach(doc=>{ const name=doc.data().name; const li=document.createElement('li'); li.textContent=name;
-            li.onclick=()=>{ document.getElementById('booking-machine-name').textContent=name; show(document.getElementById('booking-form')); };
+        getDocs(collection(db, 'machines')).then(snapshot => {
+          const ul = document.getElementById('user-machines'); ul.innerHTML = '';
+          snapshot.forEach(doc => { const name = doc.data().name; const li = document.createElement('li'); li.textContent = name;
+            li.onclick = () => { document.getElementById('booking-machine-name').textContent = name; show(document.getElementById('booking-form')); };
             ul.appendChild(li);
           });
         });
@@ -192,16 +179,15 @@ const app = initializeApp(firebaseConfig);
       document.getElementById('user-back').onclick = () => { hideAll(); show(modeSelection); };
 
       document.getElementById('submit-booking-btn').onclick = () => {
-        const machine=document.getElementById('booking-machine-name').textContent;
-        const user=document.getElementById('booking-name').value.trim();
-        const email=document.getElementById('booking-email').value.trim();
-        const start=document.getElementById('booking-start').value;
-        const end=document.getElementById('booking-end').value;
-        if (!user||!email||!start||!end||end<=start) { alert('Fill all fields and ensure end after start'); return; }
-        db.collection('bookings').add({ machine,user,email,start,end,completed:false }).then(() => {
-          db.collection('audit').add({ time:new Date(),user,action:'Create Booking',details:machine });
-          document.getElementById('booking-form').classList.add('hidden');
-        });
+        const machine = document.getElementById('booking-machine-name').textContent;
+        const user = document.getElementById('booking-name').value.trim();
+        const email = document.getElementById('booking-email').value.trim();
+        const start = document.getElementById('booking-start').value;
+        const end = document.getElementById('booking-end').value;
+        if (!user || !email || !start || !end || end <= start) { alert('Fill all fields and ensure end after start'); return; }
+        addDoc(collection(db, 'bookings'), { machine, user, email, start, end, completed: false });
+        addDoc(collection(db, 'audit'), { time: Date.now(), user, action: 'Create Booking', details: machine });
+        document.getElementById('booking-form').classList.add('hidden');
       };
     });
   </script>
