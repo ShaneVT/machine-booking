@@ -1,39 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Machine Booking System</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>Machine Booking System</h1>
 
-  <!-- Mode Selection -->
+  <!-- Mode selector -->
   <div id="mode-selection">
     <button id="admin-btn">Admin</button>
     <button id="user-btn">User</button>
   </div>
 
-  <!-- Admin Login -->
+  <!-- Admin login -->
   <div id="login-prompt" class="hidden">
     <h3>Admin Login</h3>
-    <input type="password" id="pw-input" placeholder="Password" />
+    <input type="password" id="pw-input" placeholder="Password">
     <button id="pw-submit">Login</button>
     <button id="pw-cancel">Cancel</button>
-    <div id="pw-error" style="color:red;"></div>
+    <div id="pw-error" style="color:red"></div>
   </div>
 
-  <!-- Admin Panel -->
+  <!-- Admin panel -->
   <section id="admin-section" class="hidden">
-    <button id="admin-back">« Back</button>
     <h2>Admin Panel</h2>
+    <button id="admin-back">Back</button>
 
     <h3>Manage Machines</h3>
-    <input type="text" id="machine-name-input" placeholder="Machine name"/>
+    <input type="text" id="machine-name-input" placeholder="Machine name">
     <button id="add-machine-btn">Add Machine</button>
     <ul id="machines-list"></ul>
 
+    <h3>Usage Logs</h3>
     <button id="view-logs-btn">View Logs</button>
     <button id="view-audit-btn">View Audit</button>
     <button id="view-weekly-btn">Toggle Weekly View</button>
@@ -43,8 +44,7 @@
       <table>
         <thead>
           <tr>
-            <th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th>
-            <th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+            <th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
           </tr>
         </thead>
         <tbody id="weekly-body"></tbody>
@@ -52,10 +52,10 @@
     </div>
   </section>
 
-  <!-- Usage Logs -->
+  <!-- Logs -->
   <section id="log-section" class="hidden">
-    <button id="log-back-btn">« Back</button>
     <h3>Usage Logs</h3>
+    <button id="log-back-btn">Back</button>
     <label>From: <input type="date" id="log-date-start"></label>
     <label>To:   <input type="date" id="log-date-end"></label>
     <button id="filter-logs-btn">Filter</button>
@@ -64,40 +64,38 @@
       <thead>
         <tr>
           <th>Machine</th><th>User</th><th>Start</th><th>End</th>
-          <th>Physical</th><th>Recipe</th><th>Pressure</th>
-          <th>Completed</th><th>Actions</th>
+          <th>Physical</th><th>Recipe</th><th>Pressure</th><th>Completed</th><th>Actions</th>
         </tr>
       </thead>
       <tbody id="log-table-body"></tbody>
     </table>
   </section>
 
-  <!-- Audit Log -->
+  <!-- Audit -->
   <section id="audit-section" class="hidden">
-    <button id="audit-back-btn">« Back</button>
     <h3>Audit Log</h3>
+    <button id="audit-back-btn">Back</button>
     <table>
       <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
       <tbody id="audit-table-body"></tbody>
     </table>
   </section>
 
-  <!-- User Booking -->
+  <!-- User booking -->
   <section id="user-section" class="hidden">
-    <button id="user-back">« Back</button>
     <h2>User Booking</h2>
+    <button id="user-back">Back</button>
 
     <h3>Select Machine</h3>
     <ul id="user-machines"></ul>
-
     <button id="user-weekly-btn">Toggle Weekly View</button>
+
     <div id="user-weekly-view" class="hidden">
       <h4>Your Weekly Schedule (9am–5pm)</h4>
       <table>
         <thead>
           <tr>
-            <th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th>
-            <th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+            <th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
           </tr>
         </thead>
         <tbody id="user-weekly-body"></tbody>
@@ -106,21 +104,20 @@
 
     <div id="booking-form" class="hidden">
       <h3>Book: <span id="booking-machine-name"></span></h3>
-      <label>Name:  <input type="text" id="booking-name"/></label>
-      <label>Email: <input type="email" id="booking-email"/></label>
-      <label>Start: <input type="datetime-local" id="booking-start"/></label>
-      <label>End:   <input type="datetime-local" id="booking-end"/></label>
+      <label>Name:  <input type="text"    id="booking-name"></label>
+      <label>Email: <input type="email"   id="booking-email"></label>
+      <label>Start: <input type="datetime-local" id="booking-start"></label>
+      <label>End:   <input type="datetime-local" id="booking-end"></label>
       <button id="submit-booking-btn">Submit</button>
-      <div id="booking-error" style="color:red;"></div>
+      <div id="booking-error" style="color:red"></div>
     </div>
 
     <h3>Your Active Bookings</h3>
     <ul id="booking-list"></ul>
-
     <div id="booking-detail" class="hidden"></div>
   </section>
 
-  <!-- Firebase init and App logic -->
+  <!-- Firebase + app logic -->
   <script type="module" src="firebase.js"></script>
   <script type="module" src="app.js"></script>
 </body>
