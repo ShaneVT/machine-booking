@@ -14,13 +14,12 @@
     table { border-collapse: collapse; }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     input, select, label { display: block; margin: 4px 0; }
-    #weekly-view { margin-top:20px; }
-    #weekly-view table { width:auto; }
+    #booking-detail { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+    #weekly-view, #user-weekly-view { margin-top: 20px; }
   </style>
 </head>
 <body>
   <h1>Machine Booking System</h1>
-
   <div id="mode-selection">
     <button id="admin-btn">Admin</button>
     <button id="user-btn">User</button>
@@ -34,7 +33,7 @@
     <div id="pw-error" style="color:red;"></div>
   </div>
 
-  <!-- Admin -->
+  <!-- Admin Panel -->
   <section id="admin-section" class="hidden">
     <h2>Admin Panel</h2>
     <button id="admin-back">Back</button>
@@ -48,15 +47,33 @@
     <div id="weekly-view" class="hidden">
       <h3>Weekly Schedule (9am-5pm)</h3>
       <table>
-        <thead>
-          <tr><th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>
-        </thead>
+        <thead><tr><th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr></thead>
         <tbody id="weekly-body"></tbody>
       </table>
     </div>
   </section>
 
-  <!-- User -->
+  <!-- Usage Logs -->
+  <section id="log-section" class="hidden">
+    <h3>Usage Logs</h3>
+    <button id="log-back-btn">Back</button>
+    <table>
+      <thead><tr><th>Machine</th><th>User</th><th>Start</th><th>End</th><th>Physical</th><th>Recipe</th><th>Pressure</th><th>Completed</th></tr></thead>
+      <tbody id="log-table-body"></tbody>
+    </table>
+  </section>
+
+  <!-- Audit Log -->
+  <section id="audit-section" class="hidden">
+    <h3>Audit Log</h3>
+    <button id="audit-back-btn">Back</button>
+    <table>
+      <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+      <tbody id="audit-table-body"></tbody>
+    </table>
+  </section>
+
+  <!-- User Booking -->
   <section id="user-section" class="hidden">
     <h2>User Booking</h2>
     <button id="user-back">Back</button>
@@ -66,9 +83,7 @@
     <div id="user-weekly-view" class="hidden">
       <h3>Your Weekly Schedule (9am-5pm)</h3>
       <table>
-        <thead>
-          <tr><th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>
-        </thead>
+        <thead><tr><th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr></thead>
         <tbody id="user-weekly-body"></tbody>
       </table>
     </div>
@@ -83,105 +98,93 @@
     </div>
     <h3>Your Active Bookings</h3>
     <ul id="booking-list"></ul>
-  </section>
-
-  <!-- Logs -->
-  <section id="log-section" class="hidden">
-    <h2>Usage Logs</h2>
-    <button id="log-back-btn">Back</button>
-    <table>
-      <thead>
-        <tr><th>Machine</th><th>User</th><th>Start</th><th>End</th><th>Physical</th><th>Physical Time</th><th>Recipe</th><th>Recipe Time</th><th>Pressure</th><th>Pressure Time</th><th>Completed</th><th>Completed Time</th></tr>
-      </thead>
-      <tbody id="log-table-body"></tbody>
-    </table>
-  </section>
-
-  <!-- Audit -->
-  <section id="audit-section" class="hidden">
-    <h2>Audit Log</h2>
-    <button id="audit-back-btn">Back</button>
-    <table>
-      <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
-      <tbody id="audit-table-body"></tbody>
-    </table>
+    <div id="booking-detail" class="hidden"></div>
   </section>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-    const firebaseConfig = { /* your config */ };
+    const firebaseConfig = {
+      apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
+      authDomain: "machine-booking-3c611.firebaseapp.com",
+      projectId: "machine-booking-3c611",
+      storageBucket: "machine-booking-3c611.appspot.com",
+      messagingSenderId: "417259615223",
+      appId: "1:417259615223:web:8535395de07d7bce0db4f2"
+    };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     document.addEventListener('DOMContentLoaded', () => {
       const ADMIN_PASS = '0404';
-      const modeSel = document.getElementById('mode-selection');
-      const sections = {
-        login: document.getElementById('login-prompt'),
-        admin: document.getElementById('admin-section'),
-        user: document.getElementById('user-section'),
-        log: document.getElementById('log-section'),
-        audit: document.getElementById('audit-section')
-      };
-      const pwInput = document.getElementById('pw-input');
-      const pwError = document.getElementById('pw-error');
+      const modeSelect = document.getElementById('mode-selection');
+      const loginPrompt = document.getElementById('login-prompt');
+      const adminSec = document.getElementById('admin-section');
+      const logSec = document.getElementById('log-section');
+      const auditSec = document.getElementById('audit-section');
+      const userSec = document.getElementById('user-section');
       let subs = {};
 
-      function hideAll() {
-        Object.values(sections).forEach(s => s.classList.add('hidden'));
-        Object.values(subs).forEach(un => un && un());
-        subs = {};
-      }
-
-      function show(sec) {
-        sec.classList.remove('hidden');
-      }
-
-      hideAll(); show(modeSel);
+      const hideAll = () => {
+        [modeSelect, loginPrompt, adminSec, logSec, auditSec, userSec].forEach(el => el.classList.add('hidden'));
+        Object.values(subs).forEach(unsub => unsub && unsub()); subs = {};
+      };
+      const show = el => el.classList.remove('hidden');
+      hideAll(); show(modeSelect);
 
       // Admin
-      document.getElementById('admin-btn').onclick = () => { hideAll(); pwInput.value=''; pwError.textContent=''; show(sections.login); };
-      document.getElementById('pw-cancel').onclick = () => { hideAll(); show(modeSel); };
+      document.getElementById('admin-btn').onclick = () => { hideAll(); show(loginPrompt); };
+      document.getElementById('pw-cancel').onclick = () => { hideAll(); show(modeSelect); };
       document.getElementById('pw-submit').onclick = () => {
-        if(pwInput.value!==ADMIN_PASS){pwError.textContent='Incorrect password';return;} hideAll(); show(sections.admin);
-        subs.mach = onSnapshot(collection(db,'machines'), snap => { const ul=document.getElementById('machines-list'); ul.innerHTML=''; snap.forEach(d=>{ let li=document.createElement('li'); li.textContent=d.data().name; ul.appendChild(li); }); });
-        subs.logA = onSnapshot(query(collection(db,'bookings'),orderBy('start','asc')), snap => renderLog(snap));
+        if (document.getElementById('pw-input').value !== ADMIN_PASS) { document.getElementById('pw-error').textContent = 'Incorrect password'; return; }
+        hideAll(); show(adminSec);
+        subs.machines = onSnapshot(collection(db,'machines'),snap=>{const ul=document.getElementById('machines-list');ul.innerHTML='';snap.forEach(d=>{const li=document.createElement('li');li.textContent=d.data().name;ul.appendChild(li);});});
       };
-      document.getElementById('admin-back').onclick = () => { hideAll(); show(modeSel); };
-      document.getElementById('add-machine-btn').onclick = () => { const name=document.getElementById('machine-name-input').value.trim(); if(!name)return; addDoc(collection(db,'machines'),{name}); addDoc(collection(db,'audit'),{time:Date.now(),user:'Admin',action:'Add Machine',details:name}); };
-      document.getElementById('view-logs-btn').onclick = () => { hideAll(); show(sections.log); };
-      document.getElementById('view-audit-btn').onclick = () => { hideAll(); show(sections.audit); subs.audit=onSnapshot(query(collection(db,'audit'),orderBy('time','asc')), snap => renderAudit(snap)); };
-      document.getElementById('view-weekly-btn').onclick = () => { document.getElementById('weekly-view').classList.toggle('hidden'); renderWeekly(); };
-      document.getElementById('log-back-btn').onclick = () => { hideAll(); show(sections.admin); };
-      document.getElementById('audit-back-btn').onclick = () => { hideAll(); show(sections.admin); };
+      document.getElementById('admin-back').onclick = () => { hideAll(); show(modeSelect); };
+      document.getElementById('add-machine-btn').onclick = async() => { const name=document.getElementById('machine-name-input').value.trim(); if(!name) return; await addDoc(collection(db,'machines'),{name}); };
+      document.getElementById('view-logs-btn').onclick = () => { hideAll(); show(logSec); subs.logs=onSnapshot(query(collection(db,'bookings'),orderBy('start')),snap=>{const tbody=document.getElementById('log-table-body');tbody.innerHTML='';snap.forEach(d=>{const b=d.data();const row=document.createElement('tr');[b.machine,b.user,b.start,b.end,b.completed?'✔':''].forEach(v=>{const td=document.createElement('td');td.textContent=v;row.appendChild(td);});tbody.appendChild(row);});}); };
+      document.getElementById('log-back-btn').onclick = () => { hideAll(); show(adminSec); };
+      document.getElementById('view-audit-btn').onclick = () => { hideAll(); show(auditSec); subs.audit=onSnapshot(query(collection(db,'audit'),orderBy('time')),snap=>{const tbody=document.getElementById('audit-table-body');tbody.innerHTML='';snap.forEach(d=>{const a=d.data();const row=document.createElement('tr');[new Date(a.time).toLocaleString(),a.user,a.action,a.details].forEach(v=>{const td=document.createElement('td');td.textContent=v;row.appendChild(td);});tbody.appendChild(row);});}); };
+      document.getElementById('audit-back-btn').onclick = () => { hideAll(); show(adminSec); };
+
+      // Weekly view
+      document.getElementById('view-weekly-btn').onclick = async() => {
+        const body=document.getElementById('weekly-body');body.innerHTML='';
+        const snap=await getDocs(query(collection(db,'bookings'),orderBy('start')));
+        const slots={};snap.docs.forEach(d=>{const b=d.data();const day=new Date(b.start).getDay();const hr=new Date(b.start).getHours();if(hr>=9&&hr<17)slots[day+'-'+hr]=true;});
+        for(let h=9;h<17;h++){const row=document.createElement('tr');const th=document.createElement('th');th.textContent=`${h}:00`;row.appendChild(th);for(let d=1;d<=7;d++){const td=document.createElement('td');td.textContent= slots[d+'-'+h]?'X':'';row.appendChild(td);}body.appendChild(row);}document.getElementById('weekly-view').classList.toggle('hidden'); };
 
       // User
       document.getElementById('user-btn').onclick = () => {
-        hideAll(); show(sections.user);
-        subs.machU = onSnapshot(collection(db,'machines'), snap => { const ul=document.getElementById('user-machines'); ul.innerHTML=''; snap.forEach(d=>{ let li=document.createElement('li'); li.textContent=d.data().name; li.onclick=()=>{ document.getElementById('booking-machine-name').textContent=d.data().name; document.getElementById('booking-form').classList.remove('hidden'); }; ul.appendChild(li); }); });
-        subs.bookU = onSnapshot(query(collection(db,'bookings'),orderBy('start','asc')), snap => { const ul=document.getElementById('booking-list'); ul.innerHTML=''; snap.forEach(d=>{ const b=d.data(); if(b.completed)return; let li=document.createElement('li'); li.textContent=`${b.machine}: ${b.user} (${b.start}→${b.end})`; li.onclick=()=>openBookingDetail(d.id,b); ul.appendChild(li); }); });
+        hideAll(); show(userSec);
+        subs.machinesU=onSnapshot(collection(db,'machines'),snap=>{const ul=document.getElementById('user-machines');ul.innerHTML='';snap.forEach(d=>{const li=document.createElement('li');li.textContent=d.data().name;li.onclick=()=>{document.getElementById('booking-machine-name').textContent=d.data().name;show(document.getElementById('booking-form'));};ul.appendChild(li);});});
+        subs.bookingsU=onSnapshot(query(collection(db,'bookings'),orderBy('start')),snap=>{const ul=document.getElementById('booking-list');ul.innerHTML='';snap.forEach(d=>{const b=d.data();if(b.completed)return;const li=document.createElement('li');li.textContent=`${b.machine}: ${b.user} (${b.start}→${b.end})`;li.onclick=()=>openDetail(d.id,b);ul.appendChild(li);});});
       };
-      document.getElementById('user-back').onclick = () => { hideAll(); show(modeSel); };
-      document.getElementById('user-weekly-btn').onclick = () => { document.getElementById('user-weekly-view').classList.toggle('hidden'); renderWeeklyUser(); };
-      document.getElementById('submit-booking-btn').onclick = async () => {
-        console.log('SUBMIT CLICKED'); const m=document.getElementById('booking-machine-name').textContent;
-        const u=document.getElementById('booking-name').value.trim(); const e=document.getElementById('booking-email').value.trim();
-        const s=document.getElementById('booking-start').value; const en=document.getElementById('booking-end').value;
-        if(!u||!e||!s||!en||en<=s){alert('Fill all fields and ensure end after start');return;} 
-        const snap=await getDocs(query(collection(db,'bookings'),orderBy('start','asc')));
-        for(const docItem of snap.docs){ const b=docItem.data(); if(b.machine===m&&!(en<=b.start||s>=b.end)){ alert('Time slot already booked'); return; }}
-        await addDoc(collection(db,'bookings'),{machine:m,user:u,email:e,start:s,end:en,completed:false});
-        await addDoc(collection(db,'audit'),{time:Date.now(),user:u,action:'Create Booking',details:m});
-        document.getElementById('booking-form').classList.add('hidden');
-      };
+      document.getElementById('user-weekly-btn').onclick = async() => {
+        const body=document.getElementById('user-weekly-body');body.innerHTML='';
+        const snap=await getDocs(query(collection(db,'bookings'),orderBy('start')));
+        const slots={};snap.docs.forEach(d=>{const b=d.data();const day=new Date(b.start).getDay();const hr=new Date(b.start).getHours();if(hr>=9&&hr<17)slots[day+'-'+hr]=true;});
+        for(let h=9;h<17;h++){const row=document.createElement('tr');const th=document.createElement('th');th.textContent=`${h}:00`;row.appendChild(th);for(let d=1;d<=7;d++){const td=document.createElement('td');td.textContent= slots[d+'-'+h]?'X':'';row.appendChild(td);}body.appendChild(row);}document.getElementById('user-weekly-view').classList.toggle('hidden'); };
+      document.getElementById('user-back').onclick = () => { hideAll(); show(modeSelect); };
 
-      function renderLog(snap){ const tbody=document.getElementById('log-table-body'); tbody.innerHTML=''; snap.forEach(d=>{ const b=d.data(); const row=document.createElement('tr'); [b.machine,b.user,b.start,b.end,b.physical?'✔':'✘',b.physicalTime?new Date(b.physicalTime).toLocaleString('en-AU'):'',b.recipe?'✔':'✘',b.recipeTime?new Date(b.recipeTime).toLocaleString('en-AU'):'',b.pressure||'',b.pressureTime?new Date(b.pressureTime).toLocaleString('en-AU'):'',b.completed?'✔':'✘',b.completedTime?new Date(b.completedTime).toLocaleString('en-AU'):'' ].forEach(v=>{ const td=document.createElement('td'); td.textContent=v; row.appendChild(td);} ); tbody.appendChild(row);} ); }
-      function renderAudit(snap){ const tbody=document.getElementById('audit-table-body'); tbody.innerHTML=''; snap.forEach(d=>{ const a=d.data(); const row=document.createElement('tr'); [new Date(a.time).toLocaleString('en-AU'),a.user,a.action,a.details].forEach(v=>{ const td=document.createElement('td'); td.textContent=v; row.appendChild(td);} ); tbody.appendChild(row);} ); }
-      async function renderWeekly(){ const slots={}; const snap=await getDocs(query(collection(db,'bookings'),orderBy('start','asc'))); snap.docs.forEach(d=>{ const b=d.data(); const day=new Date(b.start).getDay(); const hour=new Date(b.start).getHours(); if(hour>=9&&hour<17) slots[day+'-'+hour]=true; }); const tbody=document.getElementById('weekly-body'); tbody.innerHTML=''; for(let h=9;h<17;h++){ const row=document.createElement('tr'); const th=document.createElement('th'); th.textContent=h+':00'; row.appendChild(th); for(let d=1;d<=7;d++){ const td=document.createElement('td'); td.textContent=slots[d+'-'+h]?'X':''; row.appendChild(td);} tbody.appendChild(row);} }
-      async function renderWeeklyUser(){ const slots={}; const snap=await getDocs(query(collection(db,'bookings'),orderBy('start','asc'))); snap.docs.forEach(d=>{ const b=d.data(); const day=new Date(b.start).getDay(); const hour=new Date(b.start).getHours(); if(hour>=9&&hour<17) slots[day+'-'+hour]=true; }); const tbody=document.getElementById('user-weekly-body'); tbody.innerHTML=''; for(let h=9;h<17;h++){ const row=document.createElement('tr'); const th=document.createElement('th'); th.textContent=h+':00'; row.appendChild(th); for(let d=1;d<=7;d++){ const td=document.createElement('td'); td.textContent=slots[d+'-'+h]?'X':''; row.appendChild(td);} tbody.appendChild(row);} }
-      async function openBookingDetail(id,b){ const detail=document.getElementById('booking-detail')||document.createElement('div'); detail.id='booking-detail'; detail.innerHTML=`<h3>Booking Details</h3><p><strong>Machine:</strong>${b.machine}</p><p><strong>User:</strong>${b.user} (${b.email})</p><p><strong>Start:</strong>${b.start}</p><p><strong>End:</strong>${b.end}</p><label><input type="checkbox" id="chk-phys"${b.physical?' checked':''}/> Physical Cleaning</label><label><input type="checkbox" id="chk-rec"${b.recipe?' checked':''}/> Recipe Cleaning</label><label>Pressure:<input type="number" id="inp-pr"value="${b.pressure||''}"/></label><label>Recipe Used:<select id="sel-rec"><option value="1"${b.pressureRecipe==='1'?' selected':''}>1</option><option value="2"${b.pressureRecipe==='2'?' selected':''}>2</option><option value="3"${b.pressureRecipe==='3'?' selected':''}>3</option><option value="4"${b.pressureRecipe==='4'?' selected':''}>4</option></select></label><button id="btn-save">Save</button><button id="btn-complete">Complete</button><button id="btn-cancel">Cancel</button>`; document.getElementById('user-section').appendChild(detail); detail.querySelector('#btn-cancel').onclick=()=>detail.remove(); detail.querySelector('#btn-save').onclick=async()=>{ const phys=detail.querySelector('#chk-phys').checked; const rec=detail.querySelector('#chk-rec').checked; const pres=detail.querySelector('#inp-pr').value; const presRec=detail.querySelector('#sel-rec').value; await updateDoc(doc(db,'bookings',id),{physical:phys,recipe:rec,pressure:pres,pressureRecipe:presRec,physicalTime:phys?Date.now():null,recipeTime:rec?Date.now():null,pressureTime:pres?Date.now():null}); detail.remove(); }; detail.querySelector('#btn-complete').onclick=async()=>{ await updateDoc(doc(db,'bookings',id),{completed:true,completedTime:Date.now()}); await addDoc(collection(db,'audit'),{time:Date.now(),user:b.user,action:'Complete Booking',details:b.machine}); detail.remove(); }; }
+      // Detail/edit
+      window.openDetail = (id,b) => {
+        const detail=document.getElementById('booking-detail');detail.classList.remove('hidden');
+        detail.innerHTML=`<h4>Details</h4><p>${b.machine}</p><p>${b.user}</p>
+          <label><input type="checkbox" id="chk-phys" ${b.physical?'checked':''}/> Physical</label>
+          <label><input type="checkbox" id="chk-rec" ${b.recipe?'checked':''}/> Recipe</label>
+          <label>Pressure:<input id="inp-pr" type="number" value="${b.pressure||''}"/></label>
+          <button id="btn-save">Save</button><button id="btn-close">Close</button>`;
+        detail.querySelector('#btn-close').onclick = ()=>detail.classList.add('hidden');
+        detail.querySelector('#btn-save').onclick = async()=>{
+          const phys=detail.querySelector('#chk-phys').checked;
+          const rec=detail.querySelector('#chk-rec').checked;
+          const pres=detail.querySelector('#inp-pr').value;
+          await updateDoc(doc(db,'bookings',id),{physical:phys,recipe:rec,pressure:pres});
+          detail.classList.add('hidden');
+        };
+      };
     });
   </script>
 </body>
