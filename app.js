@@ -1,7 +1,3 @@
-import {
-  collection, addDoc, onSnapshot, query, orderBy,
-  getDocs, updateDoc, deleteDoc, doc
-} from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 import { db }              from "./firebase-init.js";
 import { collection, addDoc, onSnapshot, getDocs, updateDoc, deleteDoc, query, orderBy } 
   from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
