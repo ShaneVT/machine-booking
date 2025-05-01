@@ -8,12 +8,12 @@ import {
 
 // your own config from Firebase console here:
 const firebaseConfig = {
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "...",
-  storageBucket: "...",
-  messagingSenderId: "...",
-  appId: "..."
+  apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
+  authDomain: "machine-booking-3c611.firebaseapp.com",
+  projectId: "machine-booking-3c611",
+  storageBucket: "machine-booking-3c611.firebasestorage.app",
+  messagingSenderId: "417259615223",
+  appId: "1:417259615223:web:8535395de07d7bce0db4f2"
 };
 
 const app = initializeApp(firebaseConfig);
