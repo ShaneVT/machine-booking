@@ -1,46 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Machine Booking System</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <h1>Machine Booking System</h1>
 
-  <!-- Mode selector -->
   <div id="mode-selection">
     <button id="admin-btn">Admin</button>
     <button id="user-btn">User</button>
   </div>
 
-  <!-- Admin login -->
   <div id="login-prompt" class="hidden">
     <h3>Admin Login</h3>
-    <input type="password" id="pw-input" placeholder="Password">
+    <input type="password" id="pw-input" placeholder="Password"/>
     <button id="pw-submit">Login</button>
     <button id="pw-cancel">Cancel</button>
     <div id="pw-error" style="color:red"></div>
   </div>
 
-  <!-- Admin panel -->
   <section id="admin-section" class="hidden">
-    <h2>Admin Panel</h2>
     <button id="admin-back">Back</button>
+    <h2>Admin Panel</h2>
 
     <h3>Manage Machines</h3>
-    <input type="text" id="machine-name-input" placeholder="Machine name">
+    <input id="machine-name-input" placeholder="Machine name"/>
     <button id="add-machine-btn">Add Machine</button>
     <ul id="machines-list"></ul>
 
-    <h3>Usage Logs</h3>
     <button id="view-logs-btn">View Logs</button>
     <button id="view-audit-btn">View Audit</button>
     <button id="view-weekly-btn">Toggle Weekly View</button>
 
     <div id="weekly-view" class="hidden">
-      <h4>Weekly Schedule (9am–5pm)</h4>
+      <h3>Weekly Schedule (9–17h)</h3>
       <table>
         <thead>
           <tr>
@@ -52,12 +48,11 @@
     </div>
   </section>
 
-  <!-- Logs -->
   <section id="log-section" class="hidden">
-    <h3>Usage Logs</h3>
     <button id="log-back-btn">Back</button>
-    <label>From: <input type="date" id="log-date-start"></label>
-    <label>To:   <input type="date" id="log-date-end"></label>
+    <h2>Usage Logs</h2>
+    <label>From <input type="date" id="log-date-start"/></label>
+    <label>To   <input type="date" id="log-date-end"/></label>
     <button id="filter-logs-btn">Filter</button>
     <button id="export-pdf-btn">Export PDF</button>
     <table>
@@ -71,27 +66,24 @@
     </table>
   </section>
 
-  <!-- Audit -->
   <section id="audit-section" class="hidden">
-    <h3>Audit Log</h3>
     <button id="audit-back-btn">Back</button>
+    <h2>Audit Log</h2>
     <table>
       <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
       <tbody id="audit-table-body"></tbody>
     </table>
   </section>
 
-  <!-- User booking -->
   <section id="user-section" class="hidden">
-    <h2>User Booking</h2>
     <button id="user-back">Back</button>
+    <h2>User Booking</h2>
 
     <h3>Select Machine</h3>
     <ul id="user-machines"></ul>
     <button id="user-weekly-btn">Toggle Weekly View</button>
-
     <div id="user-weekly-view" class="hidden">
-      <h4>Your Weekly Schedule (9am–5pm)</h4>
+      <h3>Your Weekly Schedule</h3>
       <table>
         <thead>
           <tr>
@@ -104,10 +96,10 @@
 
     <div id="booking-form" class="hidden">
       <h3>Book: <span id="booking-machine-name"></span></h3>
-      <label>Name:  <input type="text"    id="booking-name"></label>
-      <label>Email: <input type="email"   id="booking-email"></label>
-      <label>Start: <input type="datetime-local" id="booking-start"></label>
-      <label>End:   <input type="datetime-local" id="booking-end"></label>
+      <label>Name:  <input id="booking-name"/></label>
+      <label>Email: <input id="booking-email"/></label>
+      <label>Start: <input type="datetime-local" id="booking-start"/></label>
+      <label>End:   <input type="datetime-local" id="booking-end"/></label>
       <button id="submit-booking-btn">Submit</button>
       <div id="booking-error" style="color:red"></div>
     </div>
@@ -117,7 +109,7 @@
     <div id="booking-detail" class="hidden"></div>
   </section>
 
-  <!-- Firebase + app logic -->
+  <!-- make sure firebase.js exports `db` -->
   <script type="module" src="firebase.js"></script>
   <script type="module" src="app.js"></script>
 </body>
