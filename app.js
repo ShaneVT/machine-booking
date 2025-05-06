@@ -1,6 +1,4 @@
-// Debugging Firestore Connection
-console.log("Initializing Firebase...");
-
+// Firebase config (verified correct)
 const firebaseConfig = {
   apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
   authDomain: "machine-booking-3c611.firebaseapp.com",
@@ -11,113 +9,82 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-try {
+if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
-  console.log("Firebase initialized successfully");
-} catch (err) {
-  console.error("Firebase initialization error:", err);
 }
-
 const db = firebase.firestore();
 
-// Test Firestore connection
-db.collection("test").doc("test").get()
-  .then(() => console.log("Firestore connection successful"))
+// Test connection
+db.collection("test").doc("test").set({test: true})
+  .then(() => console.log("Firestore connection working"))
   .catch(err => console.error("Firestore error:", err));
 
 // Load Machines
 function loadMachines() {
-  console.log("Loading machines...");
   db.collection("machines").get()
     .then((snapshot) => {
-      console.log(`Found ${snapshot.size} machines`);
       const container = document.getElementById("machine-list");
-      container.innerHTML = "";
-      
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        console.log("Machine:", doc.id, data);
-        container.innerHTML += `
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body">
-                <h5>${data.name || "Unnamed Machine"}</h5>
-                <button onclick="window.openBookingModal('${doc.id}', '${data.name || ""}')" 
-                        class="btn btn-primary">
-                  Book Now
-                </button>
-              </div>
+      container.innerHTML = snapshot.docs.map(doc => `
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h5>${doc.data().name || "Machine"}</h5>
+              <button onclick="window.bookMachine('${doc.id}', '${doc.data().name || ""}')" 
+                      class="btn btn-primary">
+                Book Now
+              </button>
             </div>
           </div>
-        `;
-      });
+        </div>
+      `).join("");
     })
     .catch(err => {
       console.error("Error loading machines:", err);
       document.getElementById("machine-list").innerHTML = `
         <div class="alert alert-danger">
-          Failed to load machines. Check console for details.
+          Error loading machines. Check console.
         </div>
       `;
     });
 }
 
-// Make function globally available
-window.openBookingModal = function(machineId, machineName) {
-  console.log("Opening modal for:", machineName);
+// Booking function
+window.bookMachine = function(machineId, machineName) {
   const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
-  
   document.getElementById("modal-title").textContent = `Book ${machineName}`;
   
   db.collection("formFields").get()
     .then((snapshot) => {
-      const container = document.getElementById("dynamic-fields");
-      container.innerHTML = "";
-      
-      snapshot.forEach(doc => {
-        const field = doc.data();
-        container.innerHTML += `
-          <div class="mb-3">
-            <label>${field.label || "Field"}</label>
-            <input type="text" class="form-control" id="field-${doc.id}" required>
-          </div>
-        `;
-      });
+      document.getElementById("dynamic-fields").innerHTML = snapshot.docs.map(doc => `
+        <div class="mb-3">
+          <label>${doc.data().label || "Field"}</label>
+          <input type="text" class="form-control" id="field-${doc.id}" required>
+        </div>
+      `).join("");
 
       document.getElementById("booking-form").onsubmit = (e) => {
         e.preventDefault();
-        const bookingData = {
+        const booking = {
           machineId,
           machineName,
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
+          ...Object.fromEntries(snapshot.docs.map(doc => 
+            [doc.id, document.getElementById(`field-${doc.id}`).value]
+          )
         };
-
-        snapshot.forEach(doc => {
-          bookingData[doc.id] = document.getElementById(`field-${doc.id}`).value;
-        });
-
-        db.collection("bookings").add(bookingData)
+        
+        db.collection("bookings").add(booking)
           .then(() => {
-            alert("Booking successful!");
+            alert("Booked successfully!");
             modal.hide();
             loadMachines();
           })
-          .catch(err => {
-            console.error("Booking failed:", err);
-            alert("Booking failed. See console for details.");
-          });
+          .catch(err => alert("Booking failed: " + err.message));
       };
       
       modal.show();
-    })
-    .catch(err => {
-      console.error("Error loading form fields:", err);
-      alert("Failed to load booking form");
     });
 };
 
 // Initialize
-window.onload = () => {
-  console.log("Page loaded");
-  loadMachines();
-};
+window.onload = loadMachines;
