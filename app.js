@@ -1,110 +1,152 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+// app.js
 import {
-  getFirestore, collection, addDoc, onSnapshot, query, orderBy,
-  getDocs, updateDoc, doc, deleteDoc
+  collection, addDoc, onSnapshot, getDocs, query, orderBy,
+  updateDoc, deleteDoc, doc
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-import { firebaseConfig } from './firebase.js';  // <-- your config export
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from './firebase.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const ADMIN_PASS = '0404';
-  const modeSelect   = document.getElementById('mode-selection');
-  const loginPrompt  = document.getElementById('login-prompt');
-  const adminSec     = document.getElementById('admin-section');
-  const logSec       = document.getElementById('log-section');
-  const auditSec     = document.getElementById('audit-section');
-  const userSec      = document.getElementById('user-section');
-  let subs = {};
+  const els = {
+    modeSelect:      document.getElementById('mode-selection'),
+    loginPrompt:     document.getElementById('login-prompt'),
+    adminSection:    document.getElementById('admin-section'),
+    logSection:      document.getElementById('log-section'),
+    auditSection:    document.getElementById('audit-section'),
+    userSection:     document.getElementById('user-section'),
+    pwInput:         document.getElementById('pw-input'),
+    pwError:         document.getElementById('pw-error'),
+    machineInput:    document.getElementById('machine-name-input'),
+    machinesList:    document.getElementById('machines-list'),
+    logBody:         document.getElementById('log-table-body'),
+    auditBody:       document.getElementById('audit-table-body'),
+    bookingForm:     document.getElementById('booking-form'),
+    bookingList:     document.getElementById('booking-list'),
+    bookingDetail:   document.getElementById('booking-detail')
+  };
 
-  function hideAll() {
-    [modeSelect, loginPrompt, adminSec, logSec, auditSec, userSec]
-      .forEach(el => el.classList.add('hidden'));
-    Object.values(subs).forEach(unsub => unsub && unsub());
-    subs = {};
-  }
+  let unsubscribers = [];
+  const hideAll = () => {
+    Object.values(els).forEach(el => el && el.classList?.add('hidden'));
+    unsubscribers.forEach(fn => fn());
+    unsubscribers = [];
+  };
   const show = el => el.classList.remove('hidden');
 
-  hideAll();
-  show(modeSelect);
+  // start on mode select
+  hideAll(); show(els.modeSelect);
 
-  // — Admin Login Flow —
+  // —— Admin flow ——  
   document.getElementById('admin-btn').onclick = () => {
-    hideAll();
-    show(loginPrompt);
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-error').textContent = '';
+    hideAll(); show(els.loginPrompt);
+    els.pwInput.value = '';
+    els.pwError.textContent = '';
   };
   document.getElementById('pw-cancel').onclick = () => {
-    hideAll();
-    show(modeSelect);
+    hideAll(); show(els.modeSelect);
   };
   document.getElementById('pw-submit').onclick = () => {
-    const pw = document.getElementById('pw-input').value;
-    if (pw !== ADMIN_PASS) {
-      document.getElementById('pw-error').textContent = 'Incorrect password';
+    if (els.pwInput.value !== ADMIN_PASS) {
+      els.pwError.textContent = 'Incorrect password';
       return;
     }
-    hideAll();
-    show(adminSec);
+    hideAll(); show(els.adminSection);
 
     // realtime machines list
-    subs.machines = onSnapshot(
+    const unsub = onSnapshot(
       collection(db, 'machines'),
       snap => {
-        const ul = document.getElementById('machines-list');
-        ul.innerHTML = '';
+        els.machinesList.innerHTML = '';
         snap.forEach(d => {
           const li = document.createElement('li');
           li.textContent = d.data().name;
-          // allow delete
-          const del = document.createElement('span');
-          del.textContent = '✖';
-          del.classList.add('delete-btn');
-          del.onclick = async () => {
-            await deleteDoc(doc(db, 'machines', d.id));
-          };
-          li.append(del);
-          ul.append(li);
+          els.machinesList.appendChild(li);
         });
       }
     );
+    unsubscribers.push(unsub);
   };
   document.getElementById('admin-back').onclick = () => {
-    hideAll();
-    show(modeSelect);
+    hideAll(); show(els.modeSelect);
   };
   document.getElementById('add-machine-btn').onclick = async () => {
-    const name = document.getElementById('machine-name-input').value.trim();
+    const name = els.machineInput.value.trim();
     if (!name) return;
     await addDoc(collection(db, 'machines'), { name });
-    document.getElementById('machine-name-input').value = '';
+    els.machineInput.value = '';
   };
 
-  // — View Logs —
-  document.getElementById('view-logs-btn').onclick = () => {
-    hideAll();
-    show(logSec);
+  // —— View Logs ——  
+  document.getElementById('view-logs-btn').onclick = async () => {
+    hideAll(); show(els.logSection);
+
+    const filterAndRender = async () => {
+      const from = document.getElementById('log-date-start').value;
+      const to   = document.getElementById('log-date-end').value;
+      const snap = await getDocs(collection(db, 'bookings'));
+      els.logBody.innerHTML = '';
+      snap.forEach(d => {
+        const b = d.data();
+        const sd = new Date(b.start);
+        if (
+          (!from || sd.toISOString().slice(0,10) >= from) &&
+          (!to   || sd.toISOString().slice(0,10) <= to)
+        ) {
+          const tr = document.createElement('tr');
+          [
+            b.machine, b.user,
+            sd.toLocaleString(), new Date(b.end).toLocaleString(),
+            b.physical ? '✔' : '✘',
+            b.recipe   ? '✔' : '✘',
+            b.pressure || '',
+            b.completed ? '✔' : '✘'
+          ].forEach(txt => {
+            const td = document.createElement('td');
+            td.textContent = txt;
+            tr.appendChild(td);
+          });
+          const actionTd = document.createElement('td');
+          // Delete
+          const del = document.createElement('button');
+          del.textContent = 'Delete';
+          del.onclick = async () => {
+            await deleteDoc(doc(db, 'bookings', d.id));
+            filterAndRender();
+          };
+          // Complete
+          const comp = document.createElement('button');
+          comp.textContent = 'Complete';
+          comp.onclick = async () => {
+            await updateDoc(doc(db, 'bookings', d.id), {
+              completed: true,
+              completedTime: Date.now()
+            });
+            filterAndRender();
+          };
+          actionTd.append(del, comp);
+          tr.appendChild(actionTd);
+
+          els.logBody.appendChild(tr);
+        }
+      });
+    };
+
     document.getElementById('filter-logs-btn').onclick = filterAndRender;
     document.getElementById('export-pdf-btn').onclick = () => window.print();
-    filterAndRender();
+    await filterAndRender();
   };
   document.getElementById('log-back-btn').onclick = () => {
-    hideAll();
-    show(adminSec);
+    hideAll(); show(els.adminSection);
   };
 
-  // — View Audit —
+  // —— Audit Log ——  
   document.getElementById('view-audit-btn').onclick = () => {
-    hideAll();
-    show(auditSec);
-    subs.audit = onSnapshot(
+    hideAll(); show(els.auditSection);
+    const unsub = onSnapshot(
       query(collection(db, 'audit'), orderBy('time')),
       snap => {
-        const tbody = document.getElementById('audit-table-body');
-        tbody.innerHTML = '';
+        els.auditBody.innerHTML = '';
         snap.forEach(d => {
           const a = d.data();
           const tr = document.createElement('tr');
@@ -116,30 +158,22 @@ document.addEventListener('DOMContentLoaded', () => {
             td.textContent = txt;
             tr.appendChild(td);
           });
-          tbody.appendChild(tr);
+          els.auditBody.appendChild(tr);
         });
       }
     );
+    unsubscribers.push(unsub);
   };
   document.getElementById('audit-back-btn').onclick = () => {
-    hideAll();
-    show(adminSec);
+    hideAll(); show(els.adminSection);
   };
 
-  // — Weekly View (Admin) —
-  document.getElementById('view-weekly-btn').onclick = async () => {
-    const body = document.getElementById('weekly-body');
-    const snap = await getDocs(collection(db, 'bookings'));
-    drawWeekly(body, snap.docs.map(d => d.data()));
-    document.getElementById('weekly-view').classList.toggle('hidden');
-  };
-
-  // — User Flow —
+  // —— User flow (booking) ——  
   document.getElementById('user-btn').onclick = () => {
-    hideAll();
-    show(userSec);
+    hideAll(); show(els.userSection);
 
-    subs.machinesU = onSnapshot(
+    // machines menu
+    const unsubM = onSnapshot(
       collection(db, 'machines'),
       snap => {
         const ul = document.getElementById('user-machines');
@@ -149,41 +183,36 @@ document.addEventListener('DOMContentLoaded', () => {
           li.textContent = d.data().name;
           li.onclick = () => {
             document.getElementById('booking-machine-name').textContent = d.data().name;
-            document.getElementById('booking-form').classList.remove('hidden');
+            show(els.bookingForm);
           };
           ul.appendChild(li);
         });
       }
     );
+    unsubscribers.push(unsubM);
 
-    subs.bookingsU = onSnapshot(
+    // active bookings list
+    const unsubB = onSnapshot(
       query(collection(db, 'bookings'), orderBy('start')),
       snap => {
-        const ul = document.getElementById('booking-list');
-        ul.innerHTML = '';
+        els.bookingList.innerHTML = '';
         snap.forEach(d => {
           const b = d.data();
           if (b.completed) return;
           const li = document.createElement('li');
-          li.textContent = `${b.machine}: ${b.user} (${b.start} → ${b.end})`;
+          li.textContent = `${b.machine} — ${b.user} (${new Date(b.start).toLocaleString()} → ${new Date(b.end).toLocaleString()})`;
           li.onclick = () => openDetail(d.id, b);
-          ul.appendChild(li);
+          els.bookingList.appendChild(li);
         });
       }
     );
+    unsubscribers.push(unsubB);
   };
   document.getElementById('user-back').onclick = () => {
-    hideAll();
-    show(modeSelect);
-  };
-  document.getElementById('user-weekly-btn').onclick = async () => {
-    const body = document.getElementById('user-weekly-body');
-    const snap = await getDocs(collection(db, 'bookings'));
-    drawWeekly(body, snap.docs.map(d => d.data()));
-    document.getElementById('user-weekly-view').classList.toggle('hidden');
+    hideAll(); show(els.modeSelect);
   };
 
-  // — Submit Booking —
+  // ——— Booking form submit ———
   document.getElementById('submit-booking-btn').onclick = async () => {
     const machine = document.getElementById('booking-machine-name').textContent;
     const user    = document.getElementById('booking-name').value.trim();
@@ -191,30 +220,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const start   = document.getElementById('booking-start').value;
     const end     = document.getElementById('booking-end').value;
     if (!user || !email || !start || !end || end <= start) {
-      document.getElementById('booking-error').textContent =
-        'Fill all fields & ensure end is after start.';
+      document.getElementById('booking-error').textContent = 'Fill all fields and ensure end > start';
       return;
     }
+    // **prevent double-booking on same machine**:
+    const bs = await getDocs(query(
+      collection(db,'bookings'),
+      orderBy('start')
+    ));
+    for (let d of bs.docs) {
+      const b = d.data();
+      if (b.machine === machine && !b.completed) {
+        // overlap?
+        if (!(end <= b.start || start >= b.end)) {
+          document.getElementById('booking-error').textContent = 'Time conflict on this machine';
+          return;
+        }
+      }
+    }
+
+    // all good → save
     await addDoc(collection(db, 'bookings'), {
-      machine, user, email, start, end, physical: false,
-      recipe: false, pressure: '', completed: false
+      machine, user, email,
+      start, end,
+      physical: false,
+      recipe: false,
+      pressure: null,
+      completed: false
     });
-    ['booking-name','booking-email','booking-start','booking-end']
-      .forEach(id => document.getElementById(id).value = '');
-    document.getElementById('booking-form').classList.add('hidden');
+
+    // reset form
+    ['booking-name','booking-email','booking-start','booking-end'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    els.bookingForm.classList.add('hidden');
   };
 
-  // — Detail / Edit Popup —
+  // ——— Booking detail popup ———
   window.openDetail = (id, b) => {
-    const detail = document.getElementById('booking-detail');
-    detail.classList.remove('hidden');
-    detail.innerHTML = `
+    const d = els.bookingDetail;
+    d.classList.remove('hidden');
+    d.innerHTML = `
       <h4>Details</h4>
-      <p>Machine: ${b.machine}</p>
-      <p>User: ${b.user}</p>
+      <p><strong>Machine:</strong> ${b.machine}</p>
+      <p><strong>User:</strong> ${b.user}</p>
       <label><input type="checkbox" id="chk-phys" ${b.physical?'checked':''}/> Physical Cleaning</label>
-      <label><input type="checkbox" id="chk-rec"  ${b.recipe   ?'checked':''}/> Recipe Cleaning</label>
-      <label>Recipe Used:
+      <label><input type="checkbox" id="chk-rec" ${b.recipe?'checked':''}/> Recipe Cleaning</label>
+      <label>
+        Recipe Used:
         <select id="sel-rec">
           <option value="">--</option>
           ${['1','2','3','4'].map(n =>
@@ -223,141 +276,43 @@ document.addEventListener('DOMContentLoaded', () => {
         </select>
       </label>
       <label>Pressure:
-        <input id="inp-pr" type="number" value="${b.pressure||''}"/>
+        <input type="number" id="inp-pr" value="${b.pressure||''}"/>
       </label>
-      <button id="btn-save">Save</button>
-      <button id="btn-complete">Complete</button>
-      <button id="btn-delete">Delete</button>
-      <button id="btn-close">Close</button>
+      <div>
+        <button id="btn-save">Save</button>
+        <button id="btn-complete">Complete</button>
+        <button id="btn-delete">Delete</button>
+        <button id="btn-close">Close</button>
+      </div>
     `;
-    detail.querySelector('#btn-close').onclick    = () => detail.classList.add('hidden');
-    detail.querySelector('#btn-save').onclick      = async () => {
-      const phys = detail.querySelector('#chk-phys').checked;
-      const rec  = detail.querySelector('#chk-rec').checked;
-      const used = detail.querySelector('#sel-rec').value;
-      const pres = detail.querySelector('#inp-pr').value;
-      await updateDoc(doc(db,'bookings',id), {
+
+    d.querySelector('#btn-close').onclick = () => d.classList.add('hidden');
+    d.querySelector('#btn-save').onclick = async () => {
+      const phys = d.querySelector('#chk-phys').checked;
+      const rec  = d.querySelector('#chk-rec').checked;
+      const used = d.querySelector('#sel-rec').value;
+      const pres = d.querySelector('#inp-pr').value;
+      await updateDoc(doc(db, 'bookings', id), {
         physical: phys,
-        recipe:    rec,
-        recipeUsed: used,
-        pressure:  pres,
-        physicalTime: phys?Date.now():b.physicalTime,
-        recipeTime:   rec?Date.now():b.recipeTime,
-        pressureTime: pres?Date.now():b.pressureTime
+        recipe: rec,
+        recipeUsed: used||null,
+        pressure: pres||null,
+        physicalTime: phys ? Date.now() : b.physicalTime,
+        recipeTime: rec ? Date.now() : b.recipeTime,
+        pressureTime: pres ? Date.now() : b.pressureTime
       });
-      detail.classList.add('hidden');
+      d.classList.add('hidden');
     };
-    detail.querySelector('#btn-complete').onclick  = async () => {
-      await updateDoc(doc(db,'bookings',id), {
+    d.querySelector('#btn-complete').onclick = async () => {
+      await updateDoc(doc(db, 'bookings', id), {
         completed: true,
         completedTime: Date.now()
       });
-      detail.classList.add('hidden');
+      d.classList.add('hidden');
     };
-    detail.querySelector('#btn-delete').onclick    = async () => {
-      await deleteDoc(doc(db,'bookings',id));
-      detail.classList.add('hidden');
+    d.querySelector('#btn-delete').onclick = async () => {
+      await deleteDoc(doc(db, 'bookings', id));
+      d.classList.add('hidden');
     };
   };
-
-  // — filterAndRender as discussed above —
-  async function filterAndRender() {
-    const fromVal = document.getElementById('log-date-start').value;
-    const toVal   = document.getElementById('log-date-end').value;
-    const fromDate = fromVal ? new Date(fromVal) : null;
-    const toDate   = toVal   ? new Date(toVal)   : null;
-
-    const snap = await getDocs(collection(db, 'bookings'));
-    const rows = [];
-    snap.forEach(d => {
-      const b = d.data();
-      const sd = b.start && b.start.toDate
-        ? b.start.toDate()
-        : new Date(b.start);
-      const ed = b.end   && b.end.toDate
-        ? b.end.toDate()
-        : new Date(b.end);
-      if (!(sd instanceof Date) || isNaN(sd) || !(ed instanceof Date) || isNaN(ed)) return;
-      if ((fromDate && sd < fromDate) || (toDate && sd > toDate)) return;
-      rows.push({ id: d.id, ...b, startDate: sd, endDate: ed });
-    });
-
-    const tbody = document.getElementById('log-table-body');
-    tbody.innerHTML = '';
-    rows.forEach(b => {
-      const tr = document.createElement('tr');
-      [
-        b.machine,
-        b.user,
-        b.startDate.toISOString().slice(0,16).replace('T',' '),
-        b.endDate  .toISOString().slice(0,16).replace('T',' '),
-        b.physical ? '✔':'✘',
-        b.recipe   ? '✔':'✘',
-        b.pressure || '',
-        b.completed? '✔':'✘'
-      ].forEach(txt => {
-        const td = document.createElement('td');
-        td.textContent = txt;
-        tr.appendChild(td);
-      });
-      // actions
-      const actTd = document.createElement('td');
-      const del = document.createElement('button');
-      del.textContent = 'Delete';
-      del.onclick = async () => {
-        await deleteDoc(doc(db,'bookings',b.id));
-        filterAndRender();
-      };
-      const comp = document.createElement('button');
-      comp.textContent = 'Complete';
-      comp.onclick = async () => {
-        await updateDoc(doc(db,'bookings',b.id), {
-          completed: true,
-          completedTime: Date.now()
-        });
-        filterAndRender();
-      };
-      actTd.append(del, comp);
-      tr.appendChild(actTd);
-
-      tbody.appendChild(tr);
-    });
-  }
-
-  // — drawWeekly as discussed above —
-  function drawWeekly(bodyEl, bookings) {
-    const slots = {};
-    bookings.forEach(b => {
-      const sd = b.start && b.start.toDate
-        ? b.start.toDate()
-        : new Date(b.start);
-      const ed = b.end   && b.end.toDate
-        ? b.end.toDate()
-        : new Date(b.end);
-      if (!(sd instanceof Date) || isNaN(sd) || !(ed instanceof Date) || isNaN(ed)) return;
-
-      for (let dt = new Date(sd); dt < ed; dt.setHours(dt.getHours()+1)) {
-        const day = dt.getDay(); // 0=Sun…6=Sat
-        const hr  = dt.getHours();
-        if (day >= 1 && day <= 7 && hr >= 9 && hr < 17) {
-          slots[`${day}-${hr}`] = b.user;
-        }
-      }
-    });
-
-    bodyEl.innerHTML = '';
-    for (let h = 9; h < 17; h++) {
-      const tr = document.createElement('tr');
-      const th = document.createElement('th');
-      th.textContent = `${h}:00`;
-      tr.appendChild(th);
-
-      for (let d = 1; d <= 7; d++) {
-        const td = document.createElement('td');
-        td.textContent = slots[`${d}-${h}`] || '';
-        tr.appendChild(td);
-      }
-      bodyEl.appendChild(tr);
-    }
-  }
 });
