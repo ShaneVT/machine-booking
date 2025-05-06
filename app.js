@@ -1,5 +1,5 @@
 // Initialize Firebase
-const firebaseConfig = {const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
   authDomain: "machine-booking-3c611.firebaseapp.com",
   projectId: "machine-booking-3c611",
