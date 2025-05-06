@@ -2,27 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Machine Booking System</title>
   <link rel="stylesheet" href="styles.css" />
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .hidden { display: none; }
-    button { margin: 5px; padding: 8px 12px; }
-    ul, table { width: 100%; margin-top: 10px; }
-    ul { list-style: none; padding: 0; }
-    li { margin: 4px 0; cursor: pointer; }
-    table { border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    input, select, label { display: block; margin: 4px 0; }
-    #booking-detail { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
-    #weekly-view, #user-weekly-view { margin-top: 20px; }
-  </style>
 </head>
 <body>
   <h1>Machine Booking System</h1>
-
-  <!-- Mode Selection -->
   <div id="mode-selection">
     <button id="admin-btn">Admin</button>
     <button id="user-btn">User</button>
@@ -48,15 +33,12 @@
     <button id="view-logs-btn">View Logs</button>
     <button id="view-audit-btn">View Audit</button>
     <button id="view-weekly-btn">Toggle Weekly View</button>
+
     <div id="weekly-view" class="hidden">
       <h3>Weekly Schedule (9am–5pm)</h3>
       <table>
         <thead>
-          <tr>
-            <th>Hour</th>
-            <th>Mon</th><th>Tue</th><th>Wed</th>
-            <th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
-          </tr>
+          <tr><th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>
         </thead>
         <tbody id="weekly-body"></tbody>
       </table>
@@ -68,15 +50,12 @@
     <h3>Usage Logs</h3>
     <button id="log-back-btn">Back</button>
     <label>From: <input type="date" id="log-date-start" /></label>
-    <label>To:   <input type="date" id="log-date-end"   /></label>
+    <label>To: <input type="date" id="log-date-end" /></label>
     <button id="filter-logs-btn">Filter</button>
     <button id="export-pdf-btn">Export PDF</button>
     <table>
       <thead>
-        <tr>
-          <th>Machine</th><th>User</th><th>Start</th><th>End</th>
-          <th>Physical</th><th>Recipe</th><th>Pressure</th><th>Completed</th><th>Actions</th>
-        </tr>
+        <tr><th>Machine</th><th>User</th><th>Start</th><th>End</th><th>Physical</th><th>Recipe</th><th>Pressure</th><th>Completed</th><th>Actions</th></tr>
       </thead>
       <tbody id="log-table-body"></tbody>
     </table>
@@ -87,9 +66,7 @@
     <h3>Audit Log</h3>
     <button id="audit-back-btn">Back</button>
     <table>
-      <thead>
-        <tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr>
-      </thead>
+      <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
       <tbody id="audit-table-body"></tbody>
     </table>
   </section>
@@ -105,11 +82,7 @@
       <h3>Your Weekly Schedule (9am–5pm)</h3>
       <table>
         <thead>
-          <tr>
-            <th>Hour</th>
-            <th>Mon</th><th>Tue</th><th>Wed</th>
-            <th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
-          </tr>
+          <tr><th>Hour</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>
         </thead>
         <tbody id="user-weekly-body"></tbody>
       </table>
@@ -117,10 +90,10 @@
 
     <div id="booking-form" class="hidden">
       <h3>Book: <span id="booking-machine-name"></span></h3>
-      <label>Name:  <input type="text"    id="booking-name"  /></label>
-      <label>Email: <input type="email"   id="booking-email" /></label>
+      <label>Name: <input type="text" id="booking-name" /></label>
+      <label>Email: <input type="email" id="booking-email" /></label>
       <label>Start: <input type="datetime-local" id="booking-start" /></label>
-      <label>End:   <input type="datetime-local" id="booking-end"   /></label>
+      <label>End: <input type="datetime-local" id="booking-end" /></label>
       <button id="submit-booking-btn">Submit</button>
       <div id="booking-error" style="color:red;"></div>
     </div>
@@ -130,7 +103,7 @@
     <div id="booking-detail" class="hidden"></div>
   </section>
 
-  <!-- Firebase + App scripts -->
+  <!-- Firebase + App -->
   <script type="module" src="firebase.js"></script>
   <script type="module" src="app.js"></script>
 </body>
