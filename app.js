@@ -50,7 +50,7 @@ function loadMachines() {
 
 // Booking function
 window.bookMachine = function(machineId, machineName) {
-  const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+  const modal = new bootstrap.Modal(document.getElementById('bookingModal')); // Removed extra quote
   document.getElementById("modal-title").textContent = `Book ${machineName}`;
   
   db.collection("formFields").get()
@@ -70,7 +70,7 @@ window.bookMachine = function(machineId, machineName) {
           date: new Date().toISOString(),
           ...Object.fromEntries(snapshot.docs.map(doc => 
             [doc.id, document.getElementById(`field-${doc.id}`).value]
-          )
+          ))
         };
         
         db.collection("bookings").add(booking)
