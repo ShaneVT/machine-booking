@@ -6,7 +6,7 @@ const firebaseConfig = {
   storageBucket: "machine-booking-3c611.firebasestorage.app",
   messagingSenderId: "417259615223",
   appId: "1:417259615223:web:8535395de07d7bce0db4f2"
-};};
+};
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
