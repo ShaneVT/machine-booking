@@ -38,10 +38,15 @@ function openBookingModal(machineId, machineName) {
     const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
     document.getElementById("modal-title").textContent = `Book ${machineName}`;
     
+    // Store the snapshot for use in form submission
+    let formFieldsSnapshot = null;
+    
     // Load dynamic form fields
     db.collection("formFields").get().then((snapshot) => {
         const fieldsContainer = document.getElementById("dynamic-fields");
         fieldsContainer.innerHTML = "";
+        formFieldsSnapshot = snapshot; // Store the snapshot
+        
         snapshot.forEach(doc => {
             const field = doc.data();
             fieldsContainer.innerHTML += `
@@ -58,8 +63,13 @@ function openBookingModal(machineId, machineName) {
         e.preventDefault();
         const bookingData = { machineId, machineName, date: new Date().toISOString() };
         
+        if (!formFieldsSnapshot) {
+            alert("Form fields not loaded yet!");
+            return;
+        }
+        
         // Get all dynamic field values
-        snapshot.forEach(doc => {
+        formFieldsSnapshot.forEach(doc => {
             bookingData[doc.id] = document.getElementById(`field-${doc.id}`).value;
         });
 
@@ -67,6 +77,11 @@ function openBookingModal(machineId, machineName) {
             .then(() => {
                 alert("Booked successfully!");
                 modal.hide();
+                loadMachines(); // Refresh the machine list
+            })
+            .catch(error => {
+                console.error("Error booking:", error);
+                alert("Booking failed!");
             });
     };
 
