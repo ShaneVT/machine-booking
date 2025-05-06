@@ -1,4 +1,4 @@
-// firebase.js (or firebase-init.js)
+// firebase.js
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
