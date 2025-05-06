@@ -12,14 +12,14 @@ const db = getFirestore(app);
 
 document.addEventListener('DOMContentLoaded', () => {
   const ADMIN_PASS = '0404';
-  const modeSelect = $('#mode-selection'),
-        loginPrompt = $('#login-prompt'),
-        adminSec    = $('#admin-section'),
-        logSec      = $('#log-section'),
-        auditSec    = $('#audit-section'),
-        userSec     = $('#user-section'),
-        pwInput     = $('#pw-input'),
-        pwError     = $('#pw-error');
+  const modeSelect = $('mode-selection'),
+        loginPrompt = $('login-prompt'),
+        adminSec    = $('admin-section'),
+        logSec      = $('log-section'),
+        auditSec    = $('audit-section'),
+        userSec     = $('user-section'),
+        pwInput     = $('pw-input'),
+        pwError     = $('pw-error');
 
   let subs = {};
   function hideAll() {
