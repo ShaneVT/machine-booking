@@ -1,39 +1,41 @@
-// Auth state management
-auth.onAuthStateChanged(user => {
-  const adminBtn = document.getElementById('admin-btn');
-  const userViewBtn = document.getElementById('user-view-btn');
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const auth = getAuth();
+
+// Auth state listener
+onAuthStateChanged(auth, (user) => {
+  const path = window.location.pathname;
   
   if (user) {
-    // User is logged in
-    if (adminBtn) adminBtn.classList.add('d-none');
-    if (userViewBtn) userViewBtn.classList.remove('d-none');
-  } else {
-    // User is logged out
-    if (adminBtn) adminBtn.classList.remove('d-none');
-    if (userViewBtn) userViewBtn.classList.add('d-none');
-    
-    // Protect admin pages
-    if (window.location.pathname.includes('admin.html')) {
+    // User is signed in
+    if (path.includes('admin.html') && !user.email.endsWith('@admin.com')) {
       window.location.href = 'index.html';
+    }
+  } else {
+    // No user signed in
+    if (path.includes('admin.html')) {
+      window.location.href = 'login.html';
     }
   }
 });
 
-// Admin login function
-window.adminLogin = async (email, password) => {
+// Login function
+window.login = async (email, password) => {
   try {
-    await auth.signInWithEmailAndPassword(email, password);
+    await signInWithEmailAndPassword(auth, email, password);
     return true;
   } catch (error) {
     console.error("Login error:", error);
-    alert("Login failed: " + error.message);
     return false;
   }
 };
 
 // Logout function
-window.logout = () => {
-  auth.signOut()
-    .then(() => window.location.reload())
-    .catch(error => console.error("Logout error:", error));
+window.logout = async () => {
+  try {
+    await signOut(auth);
+    window.location.href = 'index.html';
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
 };
