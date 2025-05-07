@@ -1,11 +1,56 @@
-body { font-family: Arial, sans-serif; margin: 20px; }
-.hidden { display: none; }
-button { margin: 5px; padding: 8px 12px; }
-ul, table { width: 100%; margin-top: 10px; }
-ul { list-style: none; padding: 0; }
-li { margin: 4px 0; cursor: pointer; }
-table { border-collapse: collapse; }
-th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-input, select, label { display: block; margin: 4px 0; }
-#booking-detail { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
-#weekly-view, #user-weekly-view { margin-top: 20px; }
+/* General Styles */
+body {
+  padding-top: 20px;
+  background-color: #f8f9fa;
+}
+
+/* Calendar Styles */
+.fc-event {
+  cursor: pointer;
+}
+.fc-event:hover {
+  opacity: 0.8;
+}
+
+/* Admin Styles */
+.admin-auth {
+  background-color: #e9ecef;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+#admin-dashboard {
+  padding: 20px;
+}
+
+/* Responsive Tables */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Status Badges */
+.badge-pending {
+  background-color: #ffc107;
+}
+.badge-approved {
+  background-color: #28a745;
+}
+.badge-rejected {
+  background-color: #dc3545;
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+  z-index: 1040;
+}
+
+/* FullCalendar Overrides */
+.fc .fc-toolbar-title {
+  font-size: 1.5rem;
+}
+
+/* Navigation */
+.navbar {
+  margin-bottom: 20px;
+}
