@@ -1,16 +1,32 @@
-// Initialize Firebase (replace with your actual config)
-var firebaseConfig = {
- const firebaseConfig = {
-  apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
-  authDomain: "machine-booking-3c611.firebaseapp.com",
-  projectId: "machine-booking-3c611",
-  storageBucket: "machine-booking-3c611.firebasestorage.app",
-  messagingSenderId: "417259615223",
-  appId: "1:417259615223:web:8535395de07d7bce0db4f2"
-};
-// Initialize only once
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+// Load Firebase SDKs if not already loaded
+if (typeof firebase === 'undefined') {
+  document.write('<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"><\/script>');
+  document.write('<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"><\/script>');
+  document.write('<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"><\/script>');
+  document.write('<script>window.firebaseLoaded = true<\/script>');
 }
-var db = firebase.firestore();
-var auth = firebase.auth();
+
+// Initialize Firebase
+function initializeFirebase() {
+  const firebaseConfig = {
+    apiKey: "AIzaSyBx3LxJX5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y",
+    authDomain: "machine-booking.firebaseapp.com",
+    projectId: "machine-booking",
+    storageBucket: "machine-booking.appspot.com",
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abc123def456"
+  };
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  window.db = firebase.firestore();
+  window.auth = firebase.auth();
+}
+
+// Wait for Firebase to load
+if (window.firebaseLoaded) {
+  initializeFirebase();
+} else {
+  window.addEventListener('firebaseLoaded', initializeFirebase);
+}
