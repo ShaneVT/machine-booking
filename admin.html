@@ -1,37 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin Dashboard</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Firebase SDKs first -->
+    <title>Admin Dashboard</title>
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <!-- Then initialization -->
-    <script src="js/firebase-init.js"></script>
-    <!-- Other dependencies -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../styles/styles.css" rel="stylesheet">
 </head>
 <body>
     <div id="login-container" class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header bg-primary text-white">
                         <h4>Admin Login</h4>
                     </div>
                     <div class="card-body">
-                        <form id="login-form">
+                        <form id="loginForm">
                             <div class="mb-3">
                                 <label class="form-label">Email</label>
-                                <input type="email" id="admin-email" class="form-control" required>
+                                <input type="email" class="form-control" id="loginEmail" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Password</label>
-                                <input type="password" id="admin-password" class="form-control" required>
+                                <input type="password" class="form-control" id="loginPassword" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Login</button>
+                            <button type="submit" class="btn btn-primary w-100">Login</button>
+                            <div class="mt-3 text-center">
+                                <a href="#" id="resetPassword">Forgot password?</a>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -40,19 +43,105 @@
     </div>
 
     <div id="admin-dashboard" class="container d-none">
-        <nav class="navbar bg-light mb-4">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
             <div class="container-fluid">
-                <span class="navbar-brand">Admin Dashboard</span>
-                <button onclick="logout()" class="btn btn-danger">Logout</button>
+                <a class="navbar-brand">Admin Dashboard</a>
+                <div id="admin-nav"></div>
             </div>
         </nav>
-        
-        <!-- Your admin content here -->
+
+        <ul class="nav nav-tabs" id="adminTabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#machines">Machines</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#bookings">Bookings</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#settings">Settings</a>
+            </li>
+        </ul>
+
+        <div class="tab-content p-3 border border-top-0 rounded-bottom">
+            <div class="tab-pane fade show active" id="machines">
+                <button class="btn btn-success mb-3" id="addMachineBtn">Add Machine</button>
+                <div class="row" id="machinesList"></div>
+            </div>
+            <div class="tab-pane fade" id="bookings">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="bookingSearch" placeholder="Search bookings...">
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Machine</th>
+                                <th>Date/Time</th>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingsList"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="settings">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>System Settings</h5>
+                        <form id="settingsForm">
+                            <div class="mb-3">
+                                <label class="form-label">Business Hours Start</label>
+                                <input type="time" class="form-control" id="businessHoursStart" value="08:00">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Business Hours End</label>
+                                <input type="time" class="form-control" id="businessHoursEnd" value="17:00">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Machine Modal -->
+    <div class="modal fade" id="machineModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="machineModalTitle">Add Machine</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="machineForm">
+                        <input type="hidden" id="machineId">
+                        <div class="mb-3">
+                            <label class="form-label">Machine Name</label>
+                            <input type="text" class="form-control" id="machineName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="machineDescription" rows="3"></textarea>
+                        </div>
+                        <div id="customFieldsContainer">
+                            <h6>Custom Fields</h6>
+                            <div id="machineCustomFields"></div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addFieldBtn">Add Field</button>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="../js/firebase-init.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
 </body>
 </html>
