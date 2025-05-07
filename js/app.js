@@ -1,22 +1,39 @@
-document.getElementById('booking-form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  if (!document.getElementById('start-time').value || !document.getElementById('end-time').value) {
-    alert("Please select both start and end times");
+document.addEventListener('DOMContentLoaded', function() {
+  // Debug check
+  console.log("DOM loaded - app.js running");
+  
+  var form = document.getElementById('booking-form');
+  if (!form) {
+    console.error("Error: Booking form not found");
     return;
   }
-  
-  db.collection("bookings").add({
-    machine: document.getElementById('machine').value,
-    userName: document.getElementById('user-name').value,
-    userEmail: document.getElementById('user-email').value,
-    startTime: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('start-time').value)),
-    endTime: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('end-time').value)),
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    status: "confirmed"
-  }).then(function() {
-    alert("Booked successfully!");
-    e.target.reset();
-  }).catch(function(error) {
-    alert("Error: " + error.message);
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    console.log("Form submission started");
+
+    try {
+      // Validate inputs
+      var startTime = new Date(document.getElementById('start-time').value);
+      if (isNaN(startTime.getTime())) throw new Error("Invalid start time");
+
+      // Create booking
+      db.collection("bookings").add({
+        machine: document.getElementById('machine').value,
+        userName: document.getElementById('user-name').value,
+        startTime: firebase.firestore.Timestamp.fromDate(startTime),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(function() {
+        alert("Booking successful!");
+        form.reset();
+      }).catch(function(error) {
+        console.error("Firestore error:", error);
+        alert("Error: " + error.message);
+      });
+
+    } catch (error) {
+      console.error("Validation error:", error);
+      alert(error.message);
+    }
   });
 });
