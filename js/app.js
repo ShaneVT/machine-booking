@@ -129,10 +129,10 @@ function openBookingModal(date = '') {
 
 async function submitBooking() {
     try {
-        const machineId = document.getElementById('machineSelect').value;
-        const date = document.getElementById('bookingDate').value;
-        const startTime = document.getElementById('startTime').value;
-        const duration = document.getElementById('duration').value;
+        const machineSelect = document.getElementById('machineSelect');
+        const bookingDate = document.getElementById('bookingDate');
+        const startTime = document.getElementById('startTime');
+        const duration = document.getElementById('duration');
 
          if (!machineSelect || !bookingDate || !startTime || !duration) {
             throw new Error("Required form elements not found");
