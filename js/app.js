@@ -133,7 +133,19 @@ async function submitBooking() {
         const date = document.getElementById('bookingDate').value;
         const startTime = document.getElementById('startTime').value;
         const duration = document.getElementById('duration').value;
+
+         if (!machineSelect || !bookingDate || !startTime || !duration) {
+            throw new Error("Required form elements not found");
+        }
+
+        const machineId = machineSelect.value;
+        const date = bookingDate.value;
+        const start = startTime.value;
+        const hours = duration.value;
         
+        if (!machineId || !date || !start || !hours) {
+            throw new Error("Please fill all required fields");
+        }
         const startDateTime = new Date(`${date}T${startTime}`);
         const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 60 * 1000);
         
@@ -177,7 +189,7 @@ async function submitBooking() {
         window.location.reload();
     } catch (error) {
         console.error("Booking error:", error);
-        alert(`Booking failed: ${error.message}`);
+        showToast(`Booking failed: ${error.message}`, 'danger');
     }
 }
 
