@@ -1,3 +1,4 @@
+// firebase-init.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
 const firebaseConfig = {
@@ -11,3 +12,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Export for other modules to use
+export { app };
