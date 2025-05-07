@@ -3,12 +3,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
+  authDomain: "machine-booking-3c611.firebaseapp.com",
+  projectId: "machine-booking-3c611",
+  storageBucket: "machine-booking-3c611.firebasestorage.app",
+  messagingSenderId: "417259615223",
+  appId: "1:417259615223:web:8535395de07d7bce0db4f2"
 };
 
 const app = initializeApp(firebaseConfig);
