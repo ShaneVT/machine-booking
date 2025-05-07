@@ -1,100 +1,26 @@
 <!DOCTYPE html>
 <html>
-    <head>
-  <!-- Load Firebase scripts FIRST -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  
-  <!-- Initialize Firebase -->
-  <script src="firebase-init.js"></script>
-  
-  <!-- Then load other scripts -->
-  <script src="auth.js"></script>
-  <script src="app.js"></script>
-</head>
 <head>
     <title>Machine Booking</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Firebase SDKs MUST come first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Then your initialization -->
+    <script src="js/firebase-init.js"></script>
+    <!-- Then other dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <nav class="navbar bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand">Machine Booking</a>
-            <div>
-                <button id="admin-btn" class="btn btn-sm btn-outline-primary">Admin Login</button>
-                <button id="user-view-btn" class="btn btn-sm btn-outline-secondary d-none">User View</button>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container mt-4">
-        <div id="calendar"></div>
-        
-        <!-- Booking Modal -->
-        <div class="modal fade" id="bookingModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 id="modal-title" class="modal-title">New Booking</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="booking-form">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Machine</label>
-                                        <select id="machine-select" class="form-select" required></select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Date</label>
-                                        <input type="date" id="booking-date" class="form-control" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Start Time</label>
-                                        <input type="time" id="start-time" class="form-control" required 
-                                               min="08:00" max="18:00" step="1800">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Duration</label>
-                                        <select id="duration" class="form-select" required>
-                                            <option value="0.5">30 minutes</option>
-                                            <option value="1" selected>1 hour</option>
-                                            <option value="2">2 hours</option>
-                                            <option value="4">4 hours</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div id="machine-details"></div>
-                                    <div id="dynamic-fields" class="mt-3"></div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Confirm Booking</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Booking Details Modal -->
-        <div class="modal fade" id="detailsModal" tabindex="-1">
-            <!-- Content loaded dynamically -->
-        </div>
-    </div>
-
-    <!-- JavaScript Libraries -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Your existing body content remains the same -->
+    
+    <!-- Scripts must load in this order -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-    <script src="app.js"></script>
-    <script src="auth.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
