@@ -1,26 +1,31 @@
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("DOM loaded - auth.js running");
-  
-  var form = document.getElementById('login-form');
+function initLoginForm() {
+  const form = document.getElementById('login-form');
   if (!form) {
-    console.error("Error: Login form not found");
+    console.error('Login form not found');
     return;
   }
 
-  form.addEventListener('submit', function(e) {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    console.log("Login attempt");
-
-    var email = document.getElementById('email').value;
-    var password = document.getElementById('password').value;
-
-    auth.signInWithEmailAndPassword(email, password)
-      .then(function() {
-        window.location.href = "admin.html";
-      })
-      .catch(function(error) {
-        console.error("Login error:", error);
-        alert("Login failed: " + error.message.replace("Firebase: ", ""));
-      });
+    
+    try {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      await auth.signInWithEmailAndPassword(email, password);
+      window.location.href = 'admin.html';
+    } catch (error) {
+      console.error('Login error:', error);
+      alert(`Login failed: ${error.message.replace('Firebase: ', '')}`);
+    }
   });
+}
+
+// Wait for Firebase and DOM
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.auth) {
+    initLoginForm();
+  } else {
+    window.addEventListener('firebaseReady', initLoginForm);
+  }
 });
