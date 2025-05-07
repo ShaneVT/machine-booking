@@ -1,32 +1,42 @@
-// Initialize calendar and other components
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize calendar
-  const calendarEl = document.getElementById('calendar');
-  if (calendarEl) {
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      events: async (fetchInfo, successCallback) => {
-        try {
-          const snapshot = await db.collection("bookings").get();
-          const events = snapshot.docs.map(doc => ({
-            id: doc.id,
-            title: doc.data().machineName,
-            start: doc.data().startTime,
-            end: doc.data().endTime
-          }));
-          successCallback(events);
-        } catch (error) {
-          console.error("Error loading bookings:", error);
-        }
-      }
-    });
-    calendar.render();
-  }
+    // Test Firestore connection
+    db.collection("test").add({
+        test: "Connection working",
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => console.log("Firestore connection successful"))
+    .catch(err => console.error("Firestore error:", err));
 
-  // Setup navigation buttons
-  document.getElementById('admin-btn')?.addEventListener('click', () => {
-    window.location.href = 'admin.html';
-  });
-
-  document.getElementById('user-view-btn')?.addEventListener('click', logout);
+    // Load machines
+    loadMachines();
 });
+
+function loadMachines() {
+    db.collection("machines").get()
+        .then((snapshot) => {
+            const container = document.getElementById("machine-list");
+            container.innerHTML = "";
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                container.innerHTML += `
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>${data.name || "Unnamed Machine"}</h5>
+                                <button class="btn btn-primary">Book Now</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        })
+        .catch(err => {
+            console.error("Error loading machines:", err);
+            document.getElementById("machine-list").innerHTML = `
+                <div class="alert alert-danger">
+                    Error loading machines. Check console.
+                </div>
+            `;
+        });
+}
