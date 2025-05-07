@@ -1,4 +1,4 @@
-// Initialize Firebase only once
+// Initialize Firebase
 if (!firebase.apps.length) {
   const firebaseConfig = {
     apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
@@ -11,6 +11,10 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
-// Make services available globally
-window.db = firebase.firestore();
-window.auth = firebase.auth();
+// Export services
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Make available globally for non-module scripts
+window.firebaseDb = db;
+window.firebaseAuth = auth;
