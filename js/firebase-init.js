@@ -9,9 +9,8 @@ if (!firebase.apps.length) {
     appId: "1:417259615223:web:8535395de07d7bce0db4f2"
   };
   firebase.initializeApp(firebaseConfig);
-  console.log("Firebase initialized successfully");
 }
 
 // Make services available globally
-window.auth = firebase.auth();
 window.db = firebase.firestore();
+window.auth = firebase.auth();
