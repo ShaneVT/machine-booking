@@ -1,60 +1,56 @@
-/**
- * Authentication Module
- * Handles login form functionality
- */
-
+// ======================
+// Authentication Handler
+// ======================
 document.addEventListener('DOMContentLoaded', function() {
-  // Check if login form exists on this page
   const loginForm = document.getElementById('login-form');
-  if (!loginForm) {
-    console.log('ℹ️ No login form detected on this page');
-    return;
-  }
-
-  console.log('🔐 Initializing login form...');
+  
+  // Exit if no login form on this page
+  if (!loginForm) return;
 
   // Form submission handler
-  loginForm.addEventListener('submit', async function(event) {
-    event.preventDefault();
+  loginForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
     
-    try {
-      // Get form values
-      const email = loginForm['email'].value.trim();
-      const password = loginForm['password'].value;
+    // Get form elements
+    const emailInput = loginForm['email'];
+    const passwordInput = loginForm['password'];
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    const errorDisplay = document.getElementById('login-error') || createErrorDisplay(loginForm);
 
+    try {
       // Validate inputs
-      if (!email || !password) {
+      if (!emailInput.value || !passwordInput.value) {
         throw new Error('Please fill in all fields');
       }
 
-      // Show loading state
-      const submitBtn = loginForm.querySelector('button[type="submit"]');
+      // Set loading state
       submitBtn.disabled = true;
       submitBtn.textContent = 'Signing in...';
 
       // Firebase authentication
-      const userCredential = await firebaseAuth.signInWithEmailAndPassword(email, password);
-      console.log('✅ Login successful:', userCredential.user.email);
-      
-      // Redirect to booking page
+      const userCredential = await firebaseAuth.signInWithEmailAndPassword(
+        emailInput.value.trim(),
+        passwordInput.value
+      );
+
+      // Redirect after successful login
       window.location.href = './booking.html';
 
     } catch (error) {
-      console.error('❌ Login error:', error);
-      
-      // Show error to user
-      const errorElement = document.getElementById('login-error');
-      if (errorElement) {
-        errorElement.textContent = error.message;
-        errorElement.style.display = 'block';
-      }
-      
-      // Reset form button
-      const submitBtn = loginForm.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In';
-      }
+      // Handle errors
+      errorDisplay.textContent = error.message;
+      errorDisplay.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign In';
     }
   });
+
+  // Helper function to create error display if none exists
+  function createErrorDisplay(form) {
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'login-error';
+    errorDiv.className = 'error-message';
+    form.prepend(errorDiv);
+    return errorDiv;
+  }
 });
