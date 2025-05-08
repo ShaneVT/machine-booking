@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Book a Machine</title>
+  <title>Machine Booking</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core/main.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid/main.css" rel="stylesheet">
+  <!-- Load FullCalendar CSS first -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
   <style>
     #calendar { max-width: 900px; margin: 30px auto; }
     .booking-form { display: none; margin-top: 20px; }
+    .machine-card { margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -73,13 +74,13 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- Load scripts in correct order -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core/main.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid/main.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction/main.js"></script>
+  <!-- Load FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+  
   <script>
     // Initialize Firebase
     const firebaseConfig = {
@@ -90,9 +91,12 @@
   messagingSenderId: "417259615223",
   appId: "1:417259615223:web:8535395de07d7bce0db4f2"
 };
-    firebase.initializeApp(firebaseConfig);
+    
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    
     const db = firebase.firestore();
-
     let selectedMachineId = null;
     let calendar;
 
@@ -100,24 +104,23 @@
     function initCalendar() {
       const calendarEl = document.getElementById('calendar');
       calendar = new FullCalendar.Calendar(calendarEl, {
-        plugins: [FullCalendar.dayGridPlugin],
         initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,dayGridWeek'
+        },
         events: async function(fetchInfo, successCallback) {
-          const bookings = await db.collection("bookings")
-            .where("start", ">=", fetchInfo.start)
-            .where("end", "<=", fetchInfo.end)
-            .get();
-          
+          const bookings = await db.collection("bookings").get();
           const events = bookings.docs.map(doc => {
             const data = doc.data();
             return {
               title: `${data.machineName} (${data.userName})`,
               start: data.start.toDate(),
               end: data.end.toDate(),
-              color: data.machineId === selectedMachineId ? '#28a745' : '#007bff'
+              backgroundColor: '#28a745'
             };
           });
-          
           successCallback(events);
         }
       });
@@ -128,13 +131,28 @@
     async function loadMachines() {
       const querySnapshot = await db.collection("machines").get();
       const machinesList = document.getElementById("machines-list");
+      
+      if (!machinesList) {
+        console.error("Machines list element not found");
+        return;
+      }
+      
       machinesList.innerHTML = "";
+      
+      if (querySnapshot.empty) {
+        machinesList.innerHTML = '<div class="alert alert-info">No machines available</div>';
+        return;
+      }
       
       querySnapshot.forEach((doc) => {
         const machine = doc.data();
         const btn = document.createElement('button');
-        btn.className = 'list-group-item list-group-item-action';
-        btn.textContent = machine.name;
+        btn.className = 'list-group-item list-group-item-action machine-card';
+        btn.innerHTML = `
+          <h5>${machine.name}</h5>
+          <p class="mb-1">${machine.description}</p>
+          <small>Location: ${machine.location || 'Not specified'}</small>
+        `;
         btn.onclick = () => selectMachine(doc.id, machine.name);
         machinesList.appendChild(btn);
       });
@@ -143,44 +161,55 @@
     // Select machine
     function selectMachine(machineId, machineName) {
       selectedMachineId = machineId;
-      document.getElementById('selected-machine').textContent = machineName;
-      document.getElementById('booking-form').style.display = 'block';
+      const bookingForm = document.getElementById('booking-form');
+      const selectedMachineSpan = document.getElementById('selected-machine');
+      
+      if (!bookingForm || !selectedMachineSpan) {
+        console.error("Required elements not found");
+        return;
+      }
+      
+      selectedMachineSpan.textContent = machineName;
+      bookingForm.style.display = 'block';
       calendar.refetchEvents();
     }
 
-    // Book machine
-    document.getElementById('book-machine-form').addEventListener('submit', async (e) => {
+    // Handle form submission
+    document.getElementById('book-machine-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const userName = document.getElementById('user-name').value;
-      const startTime = new Date(document.getElementById('start-time').value);
-      const duration = parseInt(document.getElementById('duration').value);
-      const endTime = new Date(startTime.getTime() + duration * 60 * 60 * 1000);
+      const userName = document.getElementById('user-name')?.value;
+      const startTime = document.getElementById('start-time')?.value;
+      const duration = document.getElementById('duration')?.value;
       
-      // Get machine name
-      const machineDoc = await db.collection("machines").doc(selectedMachineId).get();
-      const machineName = machineDoc.data().name;
+      if (!userName || !startTime || !duration || !selectedMachineId) {
+        alert("Please fill all fields and select a machine");
+        return;
+      }
       
       try {
+        const machineDoc = await db.collection("machines").doc(selectedMachineId).get();
+        const endTime = new Date(new Date(startTime).getTime() + duration * 60 * 60 * 1000);
+        
         await db.collection("bookings").add({
           machineId: selectedMachineId,
-          machineName: machineName,
+          machineName: machineDoc.data().name,
           userName: userName,
-          start: firebase.firestore.Timestamp.fromDate(startTime),
-          end: firebase.firestore.Timestamp.fromDate(endTime),
+          start: firebase.firestore.Timestamp.fromDate(new Date(startTime)),
+          end: firebase.firestore.Timestamp.fromDate(new Date(endTime)),
           duration: duration,
           bookedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        alert('Booking confirmed!');
+        alert("Booking confirmed!");
         e.target.reset();
         calendar.refetchEvents();
       } catch (error) {
-        alert('Error creating booking: ' + error.message);
+        alert("Error creating booking: " + error.message);
       }
     });
 
-    // Initialize on load
+    // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       initCalendar();
       loadMachines();
