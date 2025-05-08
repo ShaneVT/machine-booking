@@ -102,30 +102,33 @@
 
     // Initialize calendar
     function initCalendar() {
-      const calendarEl = document.getElementById('calendar');
-      calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,dayGridWeek'
-        },
-        events: async function(fetchInfo, successCallback) {
-          const bookings = await db.collection("bookings").get();
-          const events = bookings.docs.map(doc => {
-            const data = doc.data();
-            return {
-              title: `${data.machineName} (${data.userName})`,
-              start: data.start.toDate(),
-              end: data.end.toDate(),
-              backgroundColor: '#28a745'
-            };
-          });
-          successCallback(events);
-        }
-      });
-      calendar.render();
+  const calendarEl = document.getElementById('calendar');
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    events: async function(fetchInfo, successCallback) {
+      try {
+        const bookings = await db.collection("bookings").get();
+        const events = bookings.docs.map(doc => {
+          const data = doc.data();
+          return {
+            title: `${data.machineName || 'Machine'} (${data.userName || 'User'})`,
+            start: safeConvertTimestamp(data.start),
+            end: safeConvertTimestamp(data.end),
+            backgroundColor: data.machineId === selectedMachineId ? '#28a745' : '#007bff',
+            extendedProps: {
+              rawData: data
+            }
+          };
+        });
+        successCallback(events);
+      } catch (error) {
+        console.error("Error loading bookings:", error);
+        successCallback([]);
+      }
     }
+  });
+  calendar.render();
+}
 
     // Load machines
     async function loadMachines() {
