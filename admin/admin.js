@@ -14,7 +14,23 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 let calendar;
 
-// Initialize calendar
+// Safe date conversion
+function safeConvertTimestamp(timestamp) {
+  try {
+    if (timestamp && timestamp.toDate) {
+      return timestamp.toDate();
+    }
+    if (timestamp?.seconds) {
+      return new Date(timestamp.seconds * 1000);
+    }
+    return new Date(); // Fallback to current date
+  } catch (e) {
+    console.error("Date conversion error:", e);
+    return new Date(); // Fallback to current date
+  }
+}
+
+// Initialize calendar with proper date handling
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
   if (!calendarEl) {
@@ -36,15 +52,19 @@ function initCalendar() {
           const data = doc.data();
           return {
             id: doc.id,
-            title: `${data.machineName} (${data.userName})`,
-            start: data.start.toDate(),
-            end: data.end.toDate(),
-            backgroundColor: '#28a745'
+            title: `${data.machineName || 'Unknown'} (${data.userName || 'Anonymous'})`,
+            start: safeConvertTimestamp(data.start),
+            end: safeConvertTimestamp(data.end),
+            backgroundColor: '#28a745',
+            extendedProps: {
+              rawData: data // Store original data for debugging
+            }
           };
         });
         successCallback(events);
       } catch (error) {
         console.error("Error loading bookings:", error);
+        successCallback([]); // Return empty array on error
       }
     },
     eventClick: function(info) {
@@ -57,7 +77,7 @@ function initCalendar() {
   calendar.render();
 }
 
-// Load machines
+// Load machines (unchanged from previous version)
 async function loadMachines() {
   try {
     const querySnapshot = await db.collection("machines").get();
@@ -86,7 +106,6 @@ async function loadMachines() {
       tableBody.innerHTML += row;
     });
     
-    // Add delete handlers
     document.querySelectorAll(".delete-btn").forEach(btn => {
       btn.addEventListener("click", deleteMachine);
     });
@@ -95,7 +114,7 @@ async function loadMachines() {
   }
 }
 
-// Add new machine
+// Add new machine (unchanged from previous version)
 document.getElementById("add-machine-form")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   
@@ -126,14 +145,13 @@ document.getElementById("add-machine-form")?.addEventListener("submit", async (e
   }
 });
 
-// Delete machine
+// Delete machine (unchanged from previous version)
 async function deleteMachine(e) {
   if (!confirm("Delete this machine and all its bookings?")) return;
   
   try {
     const machineId = e.target.dataset.id;
     
-    // Delete related bookings
     const bookings = await db.collection("bookings")
       .where("machineId", "==", machineId)
       .get();
@@ -142,7 +160,6 @@ async function deleteMachine(e) {
     bookings.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
     
-    // Delete machine
     await db.collection("machines").doc(machineId).delete();
     
     loadMachines();
