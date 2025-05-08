@@ -21,7 +21,6 @@ const firebaseConfig = {
   }
   window.db = firebase.firestore();
   window.auth = firebase.auth();
-}
 
 // Wait for Firebase to load
 if (window.firebaseLoaded) {
