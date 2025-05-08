@@ -4,74 +4,84 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Machine Booking Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core/main.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid/main.css" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .section { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-    button { padding: 5px 10px; margin: 2px; cursor: pointer; }
-    .add-machine { background: #4CAF50; color: white; border: none; padding: 8px 15px; }
-    .delete-btn { background: #f44336; color: white; border: none; }
+    #calendar { max-width: 900px; margin: 30px auto; }
+    .machine-card { margin-bottom: 20px; }
   </style>
 </head>
 <body>
-  <h1>Machine Booking Admin</h1>
-  
-  <div class="section">
-    <h2>Add New Machine</h2>
-    <form id="add-machine-form">
-      <input type="text" id="machine-name" placeholder="Machine Name" required>
-      <textarea id="machine-desc" placeholder="Description" required></textarea>
-      <button type="submit" class="add-machine">Add Machine</button>
-    </form>
+  <div class="container py-4">
+    <h1 class="text-center mb-4">Machine Booking Admin</h1>
+    
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card machine-card">
+          <div class="card-header bg-primary text-white">
+            <h5>Add New Machine</h5>
+          </div>
+          <div class="card-body">
+            <form id="add-machine-form">
+              <div class="mb-3">
+                <label class="form-label">Machine Name</label>
+                <input type="text" class="form-control" id="machine-name" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" id="machine-desc" rows="3" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-success">Add Machine</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header bg-info text-white">
+            <h5>Manage Machines</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table" id="machines-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-warning text-dark">
+            <h5>Booking Calendar</h5>
+          </div>
+          <div class="card-body">
+            <div id="calendar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <a href="../index.html" class="btn btn-secondary">Back to User View</a>
+    </div>
   </div>
 
-  <div class="section">
-    <h2>Manage Machines</h2>
-    <table id="machines-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="section">
-    <h2>View Bookings</h2>
-    <table id="bookings-table">
-      <thead>
-        <tr>
-          <th>Machine</th>
-          <th>Time</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <a href="../index.html" style="display: block; margin-top: 20px;">← Back to User View</a>
-
-  <!-- Firebase & Scripts -->
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script>
-    // Your Firebase config (same as in firebase-init.js)
-const firebaseConfig = {
-  apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
-  authDomain: "machine-booking-3c611.firebaseapp.com",
-  projectId: "machine-booking-3c611",
-  storageBucket: "machine-booking-3c611.firebasestorage.app",
-  messagingSenderId: "417259615223",
-  appId: "1:417259615223:web:8535395de07d7bce0db4f2"
-};
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction/main.js"></script>
   <script src="./admin.js"></script>
 </body>
 </html>
