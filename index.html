@@ -3,56 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Machine Booking System</title>
-  <link rel="icon" href="data:,">
-  
-  <!-- Firebase SDKs - LOAD FIRST -->
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  
-  <!-- Initialization Script - LOAD SECOND -->
-  <script defer src="./js/firebase-init.js"></script>
-  
-  <!-- Page-specific Scripts - LOAD LAST -->
-  <script defer src="./js/auth.js"></script>
-  
+  <title>Machine Booking</title>
   <style>
-    .error-message {
-      color: red;
-      margin-bottom: 1rem;
-      display: none;
-    }
-    .success-message {
-      color: green;
-      margin-bottom: 1rem;
-    }
-    form {
-      max-width: 400px;
-      margin: 2rem auto;
-      padding: 2rem;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-    }
-    input, select, button {
-      display: block;
-      width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-    }
-    button[disabled] {
-      opacity: 0.7;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .machine { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; }
+    .book-btn { background: #4CAF50; color: white; border: none; padding: 5px 10px; }
   </style>
 </head>
 <body>
-  <form id="login-form">
-    <h2>Machine Booking Login</h2>
-    <input type="email" name="email" placeholder="Email" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Sign In</button>
-  </form>
+  <h1>Book a Machine</h1>
+  
+  <div id="machines-list">
+    <!-- Machines will load here -->
+    <p>Loading machines...</p>
+  </div>
 
-  <!-- No additional scripts needed - all loading is deferred -->
+  <a href="admin/admin.html" style="display: block; margin-top: 20px;">Admin Panel →</a>
+
+  <!-- Firebase & Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+  apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
+  authDomain: "machine-booking-3c611.firebaseapp.com",
+  projectId: "machine-booking-3c611",
+  storageBucket: "machine-booking-3c611.firebasestorage.app",
+  messagingSenderId: "417259615223",
+  appId: "1:417259615223:web:8535395de07d7bce0db4f2"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+  <script>
+    // Load machines for users
+    db.collection("machines").onSnapshot((querySnapshot) => {
+      const container = document.getElementById("machines-list");
+      container.innerHTML = "";
+      
+      querySnapshot.forEach((doc) => {
+        const machine = doc.data();
+        const machineDiv = document.createElement("div");
+        machineDiv.className = "machine";
+        machineDiv.innerHTML = `
+          <h3>${machine.name}</h3>
+          <p>${machine.description}</p>
+          <input type="datetime-local" id="book-time-${doc.id}">
+          <button class="book-btn" data-id="${doc.id}">Book Now</button>
+        `;
+        container.appendChild(machineDiv);
+        
+        // Add booking handler
+        machineDiv.querySelector(".book-btn").addEventListener("click", function() {
+          const time = document.getElementById(`book-time-${doc.id}`).value;
+          if (!time) {
+            alert("Please select a time");
+            return;
+          }
+          
+          db.collection("bookings").add({
+            machine: machine.name,
+            time: new Date(time),
+            bookedAt: new Date()
+          })
+          .then(() => alert("Booked successfully!"))
+          .catch(error => alert("Error: " + error.message));
+        });
+      });
+    });
+  </script>
 </body>
 </html>
