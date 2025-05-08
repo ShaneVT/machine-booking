@@ -1,4 +1,4 @@
-// Initialize Firebase if not already initialized
+// Initialize Firebase
 if (!firebase.apps.length) {
   const firebaseConfig = {
   apiKey: "AIzaSyBuJv6jHOOnzvnHHoX9t_b3mTYeMK10tCM",
@@ -14,85 +14,112 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 let calendar;
 
-// Enable offline persistence
-db.enablePersistence()
-  .catch((err) => {
-    console.log("Offline persistence failed: " + err.code);
-  });
-
 // Initialize calendar
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
+  if (!calendarEl) {
+    console.error("Calendar element not found");
+    return;
+  }
+
   calendar = new FullCalendar.Calendar(calendarEl, {
-    plugins: [FullCalendar.dayGridPlugin, FullCalendar.interactionPlugin],
     initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,dayGridWeek'
+    },
     events: async function(fetchInfo, successCallback) {
-      const bookings = await db.collection("bookings").get();
-      const events = bookings.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: `${data.machineName} (${data.userName})`,
-          start: data.start.toDate(),
-          end: data.end.toDate(),
-          backgroundColor: '#28a745'
-        };
-      });
-      successCallback(events);
+      try {
+        const bookings = await db.collection("bookings").get();
+        const events = bookings.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: `${data.machineName} (${data.userName})`,
+            start: data.start.toDate(),
+            end: data.end.toDate(),
+            backgroundColor: '#28a745'
+          };
+        });
+        successCallback(events);
+      } catch (error) {
+        console.error("Error loading bookings:", error);
+      }
     },
     eventClick: function(info) {
       if (confirm(`Delete booking for ${info.event.title}?`)) {
-        db.collection("bookings").doc(info.event.id).delete();
+        db.collection("bookings").doc(info.event.id).delete()
+          .catch(error => alert("Error deleting booking: " + error.message));
       }
     }
   });
   calendar.render();
 }
 
-// Load machines with additional fields
+// Load machines
 async function loadMachines() {
-  const querySnapshot = await db.collection("machines").get();
-  const tableBody = document.querySelector("#machines-table tbody");
-  tableBody.innerHTML = "";
-  
-  querySnapshot.forEach((doc) => {
-    const machine = doc.data();
-    const row = `
-      <tr>
-        <td>${machine.name}</td>
-        <td>${machine.description}</td>
-        <td>${machine.location || 'N/A'}</td>
-        <td>${machine.capacity || 'N/A'}</td>
-        <td>
-          <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}">Delete</button>
-        </td>
-      </tr>
-    `;
-    tableBody.innerHTML += row;
-  });
-  
-  document.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.addEventListener("click", deleteMachine);
-  });
+  try {
+    const querySnapshot = await db.collection("machines").get();
+    const tableBody = document.querySelector("#machines-table tbody");
+    
+    if (!tableBody) {
+      console.error("Machines table body not found");
+      return;
+    }
+    
+    tableBody.innerHTML = "";
+    
+    querySnapshot.forEach((doc) => {
+      const machine = doc.data();
+      const row = `
+        <tr>
+          <td>${machine.name}</td>
+          <td>${machine.description}</td>
+          <td>${machine.location || '-'}</td>
+          <td>${machine.capacity || '-'}</td>
+          <td>
+            <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}">Delete</button>
+          </td>
+        </tr>
+      `;
+      tableBody.innerHTML += row;
+    });
+    
+    // Add delete handlers
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", deleteMachine);
+    });
+  } catch (error) {
+    console.error("Error loading machines:", error);
+  }
 }
 
-// Add new machine with additional fields
-document.getElementById("add-machine-form").addEventListener("submit", async (e) => {
+// Add new machine
+document.getElementById("add-machine-form")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   
-  const machineData = {
-    name: document.getElementById("machine-name").value,
-    description: document.getElementById("machine-desc").value,
-    location: document.getElementById("machine-location").value,
-    capacity: document.getElementById("machine-capacity").value,
-    maintenanceSchedule: document.getElementById("machine-maintenance").value,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
+  const form = e.target;
+  const name = form.querySelector("#machine-name")?.value;
+  const desc = form.querySelector("#machine-desc")?.value;
+  const location = form.querySelector("#machine-location")?.value;
+  const capacity = form.querySelector("#machine-capacity")?.value;
+  
+  if (!name || !desc || !location || !capacity) {
+    alert("Please fill all fields");
+    return;
+  }
   
   try {
-    await db.collection("machines").add(machineData);
+    await db.collection("machines").add({
+      name: name,
+      description: desc,
+      location: location,
+      capacity: capacity,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     alert("Machine added successfully!");
-    e.target.reset();
+    form.reset();
     loadMachines();
   } catch (error) {
     alert("Error adding machine: " + error.message);
@@ -101,29 +128,31 @@ document.getElementById("add-machine-form").addEventListener("submit", async (e)
 
 // Delete machine
 async function deleteMachine(e) {
-  if (confirm("Delete this machine and all its bookings?")) {
-    try {
-      // Delete related bookings first
-      const bookings = await db.collection("bookings")
-        .where("machineId", "==", e.target.dataset.id)
-        .get();
-      
-      const batch = db.batch();
-      bookings.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
-      
-      // Then delete machine
-      await db.collection("machines").doc(e.target.dataset.id).delete();
-      
-      loadMachines();
-      calendar.refetchEvents();
-    } catch (error) {
-      alert("Error deleting: " + error.message);
-    }
+  if (!confirm("Delete this machine and all its bookings?")) return;
+  
+  try {
+    const machineId = e.target.dataset.id;
+    
+    // Delete related bookings
+    const bookings = await db.collection("bookings")
+      .where("machineId", "==", machineId)
+      .get();
+    
+    const batch = db.batch();
+    bookings.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    
+    // Delete machine
+    await db.collection("machines").doc(machineId).delete();
+    
+    loadMachines();
+    calendar.refetchEvents();
+  } catch (error) {
+    alert("Error deleting: " + error.message);
   }
 }
 
-// Initialize on load
+// Initialize
 document.addEventListener("DOMContentLoaded", () => {
   initCalendar();
   loadMachines();
