@@ -14,39 +14,30 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 let calendar;
 
+// Enable offline persistence
+db.enablePersistence()
+  .catch((err) => {
+    console.log("Offline persistence failed: " + err.code);
+  });
+
 // Initialize calendar
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
   calendar = new FullCalendar.Calendar(calendarEl, {
     plugins: [FullCalendar.dayGridPlugin, FullCalendar.interactionPlugin],
     initialView: 'dayGridMonth',
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,dayGridWeek'
-    },
-    dateClick: function(info) {
-      alert('Clicked on: ' + info.dateStr);
-    },
     events: async function(fetchInfo, successCallback) {
-      const bookings = await db.collection("bookings")
-        .where("start", ">=", fetchInfo.start)
-        .where("end", "<=", fetchInfo.end)
-        .get();
-      
+      const bookings = await db.collection("bookings").get();
       const events = bookings.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
-          title: `${data.machine} (${data.userName})`,
+          title: `${data.machineName} (${data.userName})`,
           start: data.start.toDate(),
           end: data.end.toDate(),
-          extendedProps: {
-            description: `Booked by ${data.userName} for ${data.duration} hours`
-          }
+          backgroundColor: '#28a745'
         };
       });
-      
       successCallback(events);
     },
     eventClick: function(info) {
@@ -55,11 +46,10 @@ function initCalendar() {
       }
     }
   });
-  
   calendar.render();
 }
 
-// Load machines
+// Load machines with additional fields
 async function loadMachines() {
   const querySnapshot = await db.collection("machines").get();
   const tableBody = document.querySelector("#machines-table tbody");
@@ -71,6 +61,8 @@ async function loadMachines() {
       <tr>
         <td>${machine.name}</td>
         <td>${machine.description}</td>
+        <td>${machine.location || 'N/A'}</td>
+        <td>${machine.capacity || 'N/A'}</td>
         <td>
           <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}">Delete</button>
         </td>
@@ -79,25 +71,26 @@ async function loadMachines() {
     tableBody.innerHTML += row;
   });
   
-  // Add delete handlers
   document.querySelectorAll(".delete-btn").forEach(btn => {
     btn.addEventListener("click", deleteMachine);
   });
 }
 
-// Add new machine
+// Add new machine with additional fields
 document.getElementById("add-machine-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   
-  const name = document.getElementById("machine-name").value;
-  const desc = document.getElementById("machine-desc").value;
+  const machineData = {
+    name: document.getElementById("machine-name").value,
+    description: document.getElementById("machine-desc").value,
+    location: document.getElementById("machine-location").value,
+    capacity: document.getElementById("machine-capacity").value,
+    maintenanceSchedule: document.getElementById("machine-maintenance").value,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
   
   try {
-    await db.collection("machines").add({
-      name: name,
-      description: desc,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    await db.collection("machines").add(machineData);
     alert("Machine added successfully!");
     e.target.reset();
     loadMachines();
@@ -110,10 +103,7 @@ document.getElementById("add-machine-form").addEventListener("submit", async (e)
 async function deleteMachine(e) {
   if (confirm("Delete this machine and all its bookings?")) {
     try {
-      // Delete machine
-      await db.collection("machines").doc(e.target.dataset.id).delete();
-      
-      // Delete related bookings
+      // Delete related bookings first
       const bookings = await db.collection("bookings")
         .where("machineId", "==", e.target.dataset.id)
         .get();
@@ -121,6 +111,9 @@ async function deleteMachine(e) {
       const batch = db.batch();
       bookings.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
+      
+      // Then delete machine
+      await db.collection("machines").doc(e.target.dataset.id).delete();
       
       loadMachines();
       calendar.refetchEvents();
