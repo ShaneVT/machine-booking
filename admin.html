@@ -3,97 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
-  <link rel="icon" href="data:,">
-  
-  <!-- Firebase SDKs -->
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  
-  <!-- Initialization Script -->
-  <script defer src="./js/firebase-init.js"></script>
-  
-  <!-- Admin Script -->
-  <script defer src="./js/admin.js"></script>
-  
+  <title>Machine Booking Admin</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-    th {
-      background-color: #f5f5f5;
-      font-weight: bold;
-    }
-    tr:hover {
-      background-color: #f9f9f9;
-    }
-    button {
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-    .delete-btn {
-      background-color: #ff4444;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-    .delete-btn:hover {
-      background-color: #cc0000;
-    }
-    #loading-indicator {
-      display: none;
-      text-align: center;
-      padding: 20px;
-    }
-    #logout-btn {
-      background: none;
-      border: 1px solid #ddd;
-      padding: 8px 16px;
-      border-radius: 4px;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .section { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    button { padding: 5px 10px; margin: 2px; cursor: pointer; }
+    .add-machine { background: #4CAF50; color: white; border: none; padding: 8px 15px; }
+    .delete-btn { background: #f44336; color: white; border: none; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Admin Dashboard</h1>
-    <button id="logout-btn">Logout</button>
-  </header>
-
-  <div id="loading-indicator">Loading bookings...</div>
+  <h1>Machine Booking Admin</h1>
   
-  <table>
-    <thead>
-      <tr>
-        <th>Booking ID</th>
-        <th>Machine</th>
-        <th>Time</th>
-        <th>User ID</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="bookings-table">
-      <!-- Bookings will be loaded here -->
-    </tbody>
-  </table>
+  <div class="section">
+    <h2>Add New Machine</h2>
+    <form id="add-machine-form">
+      <input type="text" id="machine-name" placeholder="Machine Name" required>
+      <textarea id="machine-desc" placeholder="Description" required></textarea>
+      <button type="submit" class="add-machine">Add Machine</button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>Manage Machines</h2>
+    <table id="machines-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>View Bookings</h2>
+    <table id="bookings-table">
+      <thead>
+        <tr>
+          <th>Machine</th>
+          <th>Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <a href="../index.html" style="display: block; margin-top: 20px;">← Back to User View</a>
+
+  <!-- Firebase & Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script>
+    // Your Firebase config (same as in firebase-init.js)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+  <script src="admin.js"></script>
 </body>
 </html>
